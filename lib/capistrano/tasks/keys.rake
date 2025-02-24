@@ -60,7 +60,7 @@ namespace :keys do
       append :linked_files, 'config/configuration.yml'  if fetch(:keys_use_configuration, false)
     end
 
-    after 'deploy:started', ':keys::symlink_secrets_and_config'
+    after 'deploy:started', 'keys:symlink_secrets_and_config'
     
     
 end
