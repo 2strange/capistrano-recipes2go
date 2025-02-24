@@ -1,5 +1,5 @@
-require 'capistrano/magic_recipes/base_helpers'
-include Capistrano::MagicRecipes::BaseHelpers
+require 'capistrano/recipes2go/base_helpers'
+include Capistrano::Recipes2go::BaseHelpers
 
 namespace :load do
   task :defaults do
@@ -34,9 +34,9 @@ namespace :thin do
   
   def upload_thin_daemon
     if fetch(:thin_daemon_template, :default) == :default
-      magic_template("thin_service", '/tmp/thin_service')
+      template2go("thin_service", '/tmp/thin_service')
     else
-      magic_template(fetch(:thin_daemon_template), '/tmp/thin_service')
+      template2go(fetch(:thin_daemon_template), '/tmp/thin_service')
     end
     execute :sudo, :mv, '/tmp/thin_service', "#{ fetch(:thin_daemon_path) }/#{ fetch(:thin_daemon_file) }.service"
   end
@@ -60,7 +60,7 @@ namespace :thin do
   task :reconf do
     on release_roles fetch(:thin_roles) do
       within current_path do
-        magic_template("thin_config", '/tmp/thin_app.yml')
+        template2go("thin_config", '/tmp/thin_app.yml')
         execute :sudo, :mv, '/tmp/thin_app.yml', "config/thin_app_#{fetch(:stage)}.yml"
         execute :sudo, :rm, ' -f', "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}*"
         execute :sudo, :cp, ' -f', "#{current_path}/config/thin_app_#{fetch(:stage)}.yml", "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
