@@ -24,8 +24,8 @@ Gem::Specification.new do |spec|
   ## require capistrano
   spec.add_dependency       "capistrano",         ">= 3.15"
   ## require gems needed to deploy
-  spec.add_dependency       "ed25519",            ">= 1.2, < 2.0"
-  spec.add_dependency       "bcrypt_pbkdf",       ">= 1.0, < 2.0"
+  spec.add_dependency       "ed25519",            ">= 1.2", "< 2.0"
+  spec.add_dependency       "bcrypt_pbkdf",       ">= 1.0", "< 2.0"
   
   ## Dependency for db - tasks
   spec.add_dependency       "yaml_db"
