@@ -51,10 +51,10 @@ server {
 <% if fetch(:nginx_use_ssl) %>
 # ssl-domain
 server {
-  listen                443;
+  listen                443 ssl;
   server_name           <%= nginx_domains.join(joiner) %>;
   
-  ssl                   on;
+  # ssl                   on;
   ssl_certificate       <%= fetch(:nginx_other_ssl_cert) %>;
   ssl_certificate_key   <%= fetch(:nginx_other_ssl_key) %>;
   
@@ -63,10 +63,10 @@ server {
 <% if fetch(:nginx_redirect_subdomains, false) %>
 # ssl-with-subdomain
 server {
-  listen                443;
+  listen                443 ssl;
   server_name           <%= nginx_domains.map{ |d| subdomain_regex(d) }.join(joiner) %>;
   
-  ssl                   on;
+  # ssl                   on;
   ssl_certificate       <%= fetch(:nginx_other_ssl_cert) %>;
   ssl_certificate_key   <%= fetch(:nginx_other_ssl_key) %>;
   
@@ -94,7 +94,7 @@ server {
 <% if fetch(:nginx_use_ssl) %>
   listen                443 ssl http2<%= ' default_server' if fetch(:default_site) %>;
   listen                [::]:443 ssl http2<%= ' default_server' if fetch(:default_site) %>;
-  ssl                   on;
+  # ssl                   on;
   ssl_certificate       <%= fetch(:nginx_ssl_cert) %>;
   ssl_certificate_key   <%= fetch(:nginx_ssl_key) %>;
   <%= render2go("nginx/diffie_hellman") %>
