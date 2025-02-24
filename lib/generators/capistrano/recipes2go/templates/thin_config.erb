@@ -1,0 +1,19 @@
+---
+adapter: rails
+chdir: <%= current_path %>
+environment: <%= fetch(:rails_env) %>
+rackup: <%= current_path %>/config.ru
+timeout: <%= fetch(:thin_timeout) %>
+# address: 127.0.0.1
+# port: 4000
+log: <%= shared_path %>/log/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>.log
+pid: <%= shared_path %>/pids/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>.pid
+max_conns: <%= fetch(:thin_max_conns) %>
+max_persistent_conns: <%= fetch(:thin_max_persistent_conns) %>
+require: <%= fetch(:thin_require) %>
+wait: <%= fetch(:thin_wait) %>
+servers: <%= fetch(:app_instances) %>
+# user: <%= fetch(:user) %>
+socket: /tmp/thin.<%= fetch(:application) %>.<%= fetch(:stage) %>.sock
+daemonize: <%= fetch(:thin_daemonize) %>
+onebyone: <%= fetch(:thin_onebyone) %>

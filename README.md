@@ -33,6 +33,8 @@ require "capistrano/rails/migrations"
 require 'capistrano/recipes2go/db'
 require 'capistrano/recipes2go/keys'
 require 'capistrano/recipes2go/lets_encrypt'
+require 'capistrano/recipes2go/nginx'
+require 'capistrano/recipes2go/thin'
 
 ```
 
