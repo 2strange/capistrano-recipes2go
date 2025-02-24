@@ -21,34 +21,22 @@ namespace :load do
     set :nginx_template,              -> { :default }
     set :nginx_use_ssl,               -> { false }
     
-    ##! depreacated!!!
-    set :nginx_ssl_certificate_path,      -> { '/etc/ssl/certs' }
-    set :nginx_ssl_certificate_key_path,  -> { '/etc/ssl/private' }
-    set :nginx_ssl_certificate,           -> { "#{fetch(:application)}.crt" }
-    set :nginx_ssl_certificate_key,       -> { "#{fetch(:application)}.key" }
-    set :nginx_old_ssl_certificate,       -> { "#{fetch(:application)}.crt" }
-    set :nginx_old_ssl_certificate_key,   -> { "#{fetch(:application)}.key" }
-    
     ##! New-Style
-    set :nginx_ssl_cert,              -> { "#{fetch(:nginx_ssl_certificate_path)}/#{fetch(:nginx_ssl_certificate)}" }
-    set :nginx_ssl_key,               -> { "#{fetch(:nginx_ssl_certificate_key_path)}/#{fetch(:nginx_ssl_certificate_key)}" }
+    set :nginx_ssl_cert,              -> { "/etc/letsencrypt/live/#{ fetch(:nginx_major_domain, false) ? fetch(:nginx_major_domain) : Array( fetch(:nginx_domains) )[0] }/fullchain.pem" }
+    set :nginx_ssl_key,               -> { "/etc/letsencrypt/live/#{ fetch(:nginx_major_domain, false) ? fetch(:nginx_major_domain) : Array( fetch(:nginx_domains) )[0] }/privkey.pem" }
     set :nginx_other_ssl_cert,        -> { "#{fetch(:nginx_ssl_cert)}" }
     set :nginx_other_ssl_key,         -> { "#{fetch(:nginx_ssl_key)}" }
     
     set :app_server_ip,               -> { "127.0.0.1" }
     set :nginx_hooks,                 -> { true }
     ## Lets Encrypt - Challenge Path
-    set :allow_well_known,            -> { false }
+    set :allow_well_known,            -> { true }
     ## only turn on, when rails :force_ssl is false !
-    set :nginx_strict_security,       -> { false }
+    set :nginx_strict_security,       -> { fetch(:nginx_use_ssl, false) }
     
     # Diffie-Hellman settings
-    set :nginx_use_diffie_hellman,    -> { false }
-    ##! depreacated!!!
-    set :nginx_ssl_dh_path,           -> { "/etc/ssl/certs" }
-    set :nginx_ssl_dh_file,           -> { "dhparam.pem" }
-    ##! New-Style
-    set :nginx_diffie_hellman_param,  -> { "#{fetch(:nginx_ssl_dh_path)}/#{fetch(:nginx_ssl_dh_file)}" }
+    set :nginx_use_diffie_hellman,    -> { fetch(:nginx_use_ssl, false) }
+    set :nginx_diffie_hellman_path,   -> { "/etc/ssl/certs/dhparam.pem" }
     ## SSL Cipher
     set :nginx_ssl_ciphers,           -> { "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA" }
     
@@ -208,7 +196,6 @@ namespace :nginx do
       end
       domains
     end
-    
     
     
     desc 'Creates the site configuration and upload it to the available folder'

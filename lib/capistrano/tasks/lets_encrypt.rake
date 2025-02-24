@@ -3,9 +3,10 @@ namespace :load do
     set :lets_encrypt_roles,        -> { :web }
     set :lets_encrypt_path,         -> { "~" }
     set :lets_encrypt_domains,      -> { fetch(:nginx_major_domain,false) ? [fetch(:nginx_major_domain)] + Array(fetch(:nginx_domains)) : Array(fetch(:nginx_domains)) }
-    set :lets_encrypt__www_domains, -> { true }
+    set :lets_encrypt_www_domains,  -> { false }
     set :lets_encrypt_cron_log,     -> { "#{shared_path}/log/lets_encrypt_cron.log" }
     set :lets_encrypt_email,        -> { "ssl@example.com" }
+    set :lets_encrypt_dh_path,      -> { fetch(:nginx_diffie_hellman_path, "/etc/ssl/certs/dhparam.pem")}
   end
 end
 
@@ -31,7 +32,7 @@ namespace :lets_encrypt do
   task :certonly do
     on release_roles fetch(:lets_encrypt_roles) do
       # execute "./certbot-auto certonly --webroot -w /var/www/example -d example.com -d www.example.com -w /var/www/thing -d thing.is -d m.thing.is"
-      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public #{ Array(fetch(:lets_encrypt_domains)).map{ |d| "-d #{d.gsub(/^\*?\./, "")}#{ fetch(:lets_encrypt__www_domains,false) ? " -d www.#{d.gsub(/^\*?\./, "")}" : "" }" }.join(" ") }"
+      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public #{ Array(fetch(:lets_encrypt_domains)).map{ |d| "-d #{d.gsub(/^\*?\./, "")}#{ fetch(:lets_encrypt_www_domains,false) ? " -d www.#{d.gsub(/^\*?\./, "")}" : "" }" }.join(" ") }"
     end
   end
   
@@ -68,10 +69,10 @@ namespace :lets_encrypt do
   desc "Generate Strong Diffie-Hellman Group"
   task :generate_dhparam do
     on release_roles fetch(:lets_encrypt_roles) do
-      dh_path = fetch(:nginx_diffie_hellman_param).to_s.split("/")
+      dh_path = fetch(:lets_encrypt_dh_path).to_s.split("/")
       dh_path.pop
       execute :sudo, "mkdir -p #{ dh_path.join("/") }"
-      execute :sudo, "openssl dhparam -out #{ fetch(:nginx_diffie_hellman_param) } 2048"
+      execute :sudo, "openssl dhparam -out #{ fetch(:lets_encrypt_dh_path) } 2048"
     end
   end
   
@@ -94,7 +95,7 @@ namespace :lets_encrypt do
   task :certonly_expand do
     on release_roles fetch(:lets_encrypt_roles) do
       # execute "./certbot-auto certonly --webroot -w /var/www/example -d example.com -d www.example.com -w /var/www/thing -d thing.is -d m.thing.is"
-      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public #{ Array(fetch(:lets_encrypt_domains)).map{ |d| "-d #{d.gsub(/^\*?\./, "")}#{ fetch(:lets_encrypt__www_domains,false) ? " -d www.#{d.gsub(/^\*?\./, "")}" : "" }" }.join(" ") } --expand"
+      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public #{ Array(fetch(:lets_encrypt_domains)).map{ |d| "-d #{d.gsub(/^\*?\./, "")}#{ fetch(:lets_encrypt_www_domains,false) ? " -d www.#{d.gsub(/^\*?\./, "")}" : "" }" }.join(" ") } --expand"
     end
   end
   
