@@ -10,7 +10,7 @@ end
 
 namespace :keys do
   
-    desc "upload master.key & credentials.yml.enc to server #{ CONFIG['app_name'] }"
+    desc "upload master.key & credentials.yml.enc to #{ fetch(:application) } - #{fetch(:stage)}"
     task :upload_master do
       on roles %w{app db web} do
         %w(master.key credentials.yml.enc).each do |that|
@@ -22,7 +22,7 @@ namespace :keys do
       end
     end
 
-    desc "upload configuration.yml to server #{ CONFIG['app_name'] }"
+    desc "upload configuration.yml to server #{ fetch(:application) } - #{fetch(:stage)}"
     task :upload_config do
       on roles %w{app db web} do
         that = 'configuration.yml' 
@@ -33,7 +33,7 @@ namespace :keys do
       end
     end
 
-    desc "check »config« dir on server #{ CONFIG['app_name'] }"
+    desc "check »config« dir on server #{ fetch(:application) } - #{fetch(:stage)}"
     task :check_config do
       on roles %w{app db web} do
         within shared_path do
