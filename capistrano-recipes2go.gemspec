@@ -20,15 +20,15 @@ Gem::Specification.new do |spec|
     Dir["{config,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
 
-  spec.add_dependency   "rails",              ">= 6.0"
+  spec.add_dependency       "rails",              ">= 6.0"
   ## require capistrano
-  s.add_dependency      "capistrano",         ">= 3.15"
+  spec.add_dependency       "capistrano",         ">= 3.15"
   ## require gems needed to deploy
-  s.add_dependency      "ed25519",            ">= 1.2, < 2.0"
-  s.add_dependency      "bcrypt_pbkdf",       ">= 1.0, < 2.0"
+  spec.add_dependency       "ed25519",            ">= 1.2, < 2.0"
+  spec.add_dependency       "bcrypt_pbkdf",       ">= 1.0, < 2.0"
   
   ## Dependency for db - tasks
-  s.add_dependency "yaml_db"
+  spec.add_dependency       "yaml_db"
   
   
 end
