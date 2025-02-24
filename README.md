@@ -21,6 +21,22 @@ $ bundle
 
 The gem already includes `capistrano`, `capistrano-rails` and `capistrano-rvm` .. so actually thats all you need to deploy your app.
 
+
+In Capfile:
+```ruby
+
+require "capistrano/rvm"
+require "capistrano/bundler"
+require "capistrano/rails/assets"
+require "capistrano/rails/migrations"
+
+require 'capistrano/recipes2go/db'
+require 'capistrano/recipes2go/keys'
+require 'capistrano/recipes2go/lets_encrypt'
+
+```
+
+
 ## Contributing
 Contribution directions go here.
 
