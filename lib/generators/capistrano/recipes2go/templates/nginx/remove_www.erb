@@ -1,10 +1,5 @@
 <% if fetch(:nginx_remove_www) %>
-  if ($host ~* ^www\.(.*)) {
-    set $host_without_www $1;
-    <% if fetch(:nginx_use_ssl) %>
-    rewrite ^(.*) https://$host_without_www$1 permanent;
-    <% else %>
-    rewrite ^(.*) http://$host_without_www$1 permanent;
-    <% end %>
+  if ($host ~* ^www\.(?<domain>.*)) {
+    return 301 <%= fetch(:nginx_use_ssl) ? "https" : "http" %>://$domain$request_uri;
   }
 <% end %>

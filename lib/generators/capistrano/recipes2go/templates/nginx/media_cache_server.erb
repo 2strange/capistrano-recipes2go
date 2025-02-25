@@ -1,12 +1,12 @@
 <% if fetch(:proxy_cache_media) %>
-  # Media-Path with NginX-Proxy-Cache
+# Media Proxy Cache
   location ^~ /<%= fetch(:proxy_cache_media_path) %>/ {
-    # auth_basic          off;
     proxy_cache           <%= fetch(:proxy_cache_media_name) %>;
-    # proxy_cache_lock    on;
-    # add_header          X-Cache-Status    $upstream_cache_status;
-    # proxy_cache_bypass  $http_bypass_proxy;
+    proxy_cache_lock      on;
+    proxy_cache_valid     200 <%= fetch(:proxy_cache_media_time) %>;
+    proxy_cache_use_stale error timeout updating;
+    proxy_ignore_headers  Set-Cookie;
+    proxy_cache_bypass    $http_bypass_proxy;
     proxy_pass            $scheme://thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
-    proxy_cache_valid     200  <%= fetch(:proxy_cache_media_time) %>; 
   }
 <% end %>

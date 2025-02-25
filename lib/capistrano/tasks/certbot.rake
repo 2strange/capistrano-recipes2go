@@ -6,8 +6,9 @@ namespace :load do
     set :certbot_www_domains,   -> { false }
     set :certbot_job_log,       -> { "#{shared_path}/log/lets_encrypt_cron.log" }
     set :certbot_job_type,      -> { 'systemd' }  # systemd / cron
-    set :certbot_email,         -> { "ssl@example.com" }
-    set :certbot_dh_path,       -> { fetch(:nginx_diffie_hellman_path, "/etc/ssl/certs/dhparam.pem")}
+    set :certbot_email,         -> { "" }
+    # set :certbot_dh_path,       -> { fetch(:nginx_diffie_hellman_path, "/etc/ssl/certs/dhparam.pem")}
+    # set :certbot_dh_size,       -> { 4096 }
     set :certbot_snap,          -> { false }
   end
 end
@@ -38,32 +39,32 @@ namespace :certbot do
   desc "Generate LetsEncrypt certificate"
   task :generate do
     on release_roles fetch(:certbot_roles) do
-      # 1️⃣ E-Mail-Check mit Erklärung
+      # 1️⃣ Email check with explanation
       certbot_email = fetch(:certbot_email, "").strip
       if certbot_email.empty?
-        puts "⚠️  Es ist keine E-Mail-Adresse für Let's Encrypt hinterlegt!"
-        puts "➡️  Diese ist erforderlich, um Benachrichtigungen über ablaufende Zertifikate zu erhalten."
-        puts "➡️  Bitte gib eine gültige E-Mail-Adresse ein:"
-        certbot_email = ask(:certbot_email, "E-Mail für Let's Encrypt:")
+        puts "⚠️  No email address is set for Let's Encrypt!"
+        puts "➡️  A valid email is required to receive expiration notifications."
+        puts "➡️  Please enter a valid email address:"
+        certbot_email = ask(:certbot_email, "Email for Let's Encrypt:")
         set(:certbot_email, certbot_email)
       end
 
-      # 2️⃣ Domain-Check für `--expand`
+      # 2️⃣ Check if `--expand` is needed
       certbot_domains = Array(fetch(:certbot_domains))
       use_www_domains = fetch(:certbot_www_domains, false)
 
       should_expand = false
 
-      # Falls eine Major-Domain existiert oder mehrere Domains angegeben wurden, nachfragen
+      # If multiple domains are provided, ask the user
       if use_www_domains || certbot_domains.length > 1
-        puts "🔍  Es scheint, dass du bereits Zertifikate hast oder neue Domains hinzufügen möchtest."
-        puts "➡️  Falls du bestehende Zertifikate um neue Domains erweitern möchtest, wähle 'ja'."
-        should_expand = ask(:certbot_expand, "Soll `--expand` genutzt werden? (ja/nein)").downcase.strip == "ja"
+        puts "🔍  It looks like you already have certificates or are adding new domains."
+        puts "➡️  If you want to expand an existing certificate with new domains, select 'yes'."
+        should_expand = ask(:certbot_expand, "Use `--expand`? (yes/no)").downcase.strip == "yes"
       end
 
       expand_option = should_expand ? "--expand" : ""
 
-      # 3️⃣ Certbot-Befehl mit den Domains generieren
+      # 3️⃣ Generate domain arguments
       domain_args = certbot_domains.map do |d|
         base_domain = d.gsub(/^\*?\./, "")
         domain_entry = "-d #{base_domain}"
@@ -71,10 +72,11 @@ namespace :certbot do
         domain_entry
       end.join(" ")
 
-      # 4️⃣ Certbot ausführen
+      # 4️⃣ Execute Certbot
       execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{certbot_email} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
     end
   end
+  
   
   
   desc "Upload and setup LetsEncrypt Auto-renew-job"
@@ -138,16 +140,43 @@ namespace :certbot do
     end
   end
   
-  
-  desc "Generate Strong Diffie-Hellman Group"
-  task :generate_dhparam do
-    on release_roles fetch(:certbot_roles) do
-      dh_path = fetch(:certbot_dh_path).to_s.split("/")
-      dh_path.pop
-      execute :sudo, "mkdir -p #{ dh_path.join("/") }"
-      execute :sudo, "openssl dhparam -out #{ fetch(:certbot_dh_path) } 2048"
+
+  # => ECDH (X25519) is automatically used → No need to generate DH params.
+  ## desc "Generate Strong Diffie-Hellman Group"
+  ## task :generate_dhparam do
+  ##   on release_roles fetch(:certbot_roles) do
+  ##     dh_path = fetch(:certbot_dh_path).to_s.split("/")
+  ##     dh_path.pop
+  ##     execute :sudo, "mkdir -p #{dh_path.join("/")}"
+  ##     # Set key size (default to 4096 if not specified)
+  ##     dh_key_size = fetch(:certbot_dh_size, 4096)
+  ##     # Check if DH params already exist
+  ##     if test("[ -f #{fetch(:certbot_dh_path)} ]")
+  ##       puts "✅ DH parameters already exist at #{fetch(:certbot_dh_path)}, skipping generation."
+  ##     else
+  ##       puts "🔐 Generating #{dh_key_size}-bit Diffie-Hellman parameters..."
+  ##       execute :sudo, "openssl dhparam -out #{fetch(:certbot_dh_path)} #{dh_key_size}"
+  ##     end
+  ##   end
+  ## end
+
+
+  desc "Check if TLS 1.3 is correctly enabled on the server"
+  task :check_tls do
+    on release_roles(:web) do
+      domain = fetch(:nginx_major_domain, fetch(:nginx_domains).first)
+
+      puts "🔍 Checking TLS 1.3 for #{domain}..."
+      result = capture("curl -v --tlsv1.3 --tls-max 1.3 https://#{domain} 2>&1")
+
+      if result.include?("SSL connection using TLSv1.3")
+        puts "✅ TLS 1.3 is enabled and working for #{domain}!"
+      else
+        puts "❌ WARNING: TLS 1.3 may not be working! Check your Nginx SSL settings."
+      end
     end
   end
+  
   
   
   

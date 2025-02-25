@@ -30,11 +30,11 @@ require "capistrano/bundler"
 require "capistrano/rails/assets"
 require "capistrano/rails/migrations"
 
-require 'capistrano/recipes2go/db'
-require 'capistrano/recipes2go/keys'
-require 'capistrano/recipes2go/lets_encrypt'
-require 'capistrano/recipes2go/nginx'
-require 'capistrano/recipes2go/thin'
+require 'capistrano/recipes2go/certbot'     # Lets-Encrypt helpers
+require 'capistrano/recipes2go/db'          # Database helpers
+require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
+require 'capistrano/recipes2go/nginx'       # Nginx helpers
+require 'capistrano/recipes2go/thin'        # Thin helpers
 
 ```
 
