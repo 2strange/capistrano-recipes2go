@@ -28,7 +28,7 @@ namespace :load do
 end
 
 namespace :server do
-  desc "Setup Debian 12 Server with required dependencies"
+  desc "Setup Debian-12 or Ubuntu-24 Server with required dependencies"
   task :setup do
     on roles(:web) do
       user = fetch(:srvr_user)
