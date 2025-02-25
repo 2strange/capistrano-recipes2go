@@ -31,10 +31,11 @@ require "capistrano/rails/assets"
 require "capistrano/rails/migrations"
 
 require 'capistrano/recipes2go/certbot'     # Lets-Encrypt helpers
-require 'capistrano/recipes2go/db'          # Database helpers
+require 'capistrano/recipes2go/db'          # Database helpers (seed + yaml_db tasks)
 require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
 require 'capistrano/recipes2go/nginx'       # Nginx helpers
 require 'capistrano/recipes2go/thin'        # Thin helpers
+require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
 ```
 
