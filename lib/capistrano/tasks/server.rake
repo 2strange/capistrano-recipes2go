@@ -1,29 +1,29 @@
 namespace :load do
   task :defaults do
     # Default user for deployment, uses `fetch(:user, "deploy")` if not explicitly set
-    set :srvr_user, -> { fetch(:user, "deploy") }
+    set :srvr_user,                 -> { fetch(:user, "deploy") }
     
     # Whether to create the deploy user if it does not exist
-    set :srvr_create_user, -> { false }
+    set :srvr_create_user,          -> { false }
 
     # Ruby version and RVM installation
-    set :srvr_install_nvm, -> { true }
-    set :srvr_rvm_ruby_version, -> { "3.3.5" }
+    set :srvr_install_nvm,          -> { true }
+    set :srvr_rvm_ruby_version,     -> { fetch(:rvm_ruby_version, "3.3.5") }
 
     # Node.js version and NVM installation
-    set :srvr_install_nvm, -> { true }
-    set :srvr_nvm_node_version, -> { "18" }
+    set :srvr_install_nvm,          -> { true }
+    set :srvr_nvm_node_version,     -> { "18" }
 
     # Install core services
-    set :srvr_install_nginx, -> { true }
-    set :srvr_install_postgres, -> { true }
-    set :srvr_install_certbot, -> { true }
-    set :srvr_install_redis, -> { true }
-    set :srvr_install_thin, -> { true }
+    set :srvr_install_nginx,        -> { true }
+    set :srvr_install_postgres,     -> { true }
+    set :srvr_install_certbot,      -> { true }
+    set :srvr_install_redis,        -> { true }
+    set :srvr_install_thin,         -> { true }
 
     # Enable firewall and allow additional ports
-    set :srvr_enable_firewall, -> { true }
-    set :srvr_ufw_additional_ports, -> { [] } # Example: ["2224", "8080"]
+    set :srvr_enable_firewall,      -> { true }
+    set :srvr_ufw_additional_ports, -> { fetch(:ufw_additional_ports, []) } # Example: ["2224", "8080"]
   end
 end
 
