@@ -30,6 +30,8 @@ require "capistrano/bundler"
 require "capistrano/rails/assets"
 require "capistrano/rails/migrations"
 
+require 'capistrano/recipes2go/server'      # Setup Debian12 / Ubuntu24 server tasks
+
 require 'capistrano/recipes2go/certbot'     # Lets-Encrypt helpers
 require 'capistrano/recipes2go/db'          # Database helpers (seed + yaml_db tasks)
 require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
