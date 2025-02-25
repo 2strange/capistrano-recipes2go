@@ -2,8 +2,9 @@ namespace :server do
   desc "Setup Debian 12 or Ubuntu 24.04 Server with required dependencies"
   task :setup do
     on roles(:web) do
+      ## Deploy-User
       deploy_user = fetch(:deploy_user, "deploy")
-
+      add_deploy_user = fetch(:add_deploy_user, true)
       ## RVM & Ruby
       install_rvm = fetch(:install_rvm, true)
       rvm_ruby_version = fetch(:rvm_ruby_version, "3.3.5")
@@ -16,6 +17,9 @@ namespace :server do
       install_certbot = fetch(:install_certbot, true)
       install_redis = fetch(:install_redis, true)
       install_thin = fetch(:install_thin, true)
+      ## Firewall
+      enable_firewall = fetch(:enable_firewall, true)
+      ufw_additional_ports = fetch(:ufw_additional_ports, [])   # Nur zusätzliche Ports ie. 2224 für nydas worker
 
       puts "🚀 Server-Setup für Capistrano-Deployments beginnt..."
       
@@ -23,6 +27,16 @@ namespace :server do
       puts "📦 System aktualisieren..."
       execute :sudo, "apt update -y && apt upgrade -y"
       execute :sudo, "apt install -y build-essential bison curl git-core git rsync"
+
+
+      if add_deploy_user
+        # Erstelle den Deploy-User
+        puts "👤 Erstelle den Deploy-User '#{deploy_user}' falls nicht vorhanden..."
+        execute :sudo, "id #{deploy_user} || adduser --disabled-password --gecos '' #{deploy_user}"
+        execute :sudo, "usermod -aG sudo #{deploy_user}"
+        execute :sudo, "echo '#{deploy_user} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/#{deploy_user}"
+      end
+
 
       # ImageMagick & Libraries installieren
       puts "🖼️ Installiere ImageMagick und benötigte Bibliotheken..."
@@ -96,6 +110,24 @@ namespace :server do
       end
 
 
+      # Firewall konfigurieren (falls aktiviert)
+      if enable_firewall
+        puts "🛡️ Konfiguriere UFW-Firewall..."
+
+        # Standard-Ports immer freigeben
+        execute :sudo, "ufw allow OpenSSH" # Erlaubt SSH (Port 22)
+        execute :sudo, "ufw allow 'Nginx Full'" if install_nginx # Erlaubt HTTP (80) & HTTPS (443)
+
+        # Zusätzliche Ports freigeben (z. B. 2224, 8080, 3306)
+        ufw_additional_ports.each do |port|
+          execute :sudo, "ufw allow #{port}"
+        end
+
+        execute :sudo, "ufw --force enable"
+        puts "✅ UFW-Firewall aktiviert!"
+      end
+
+
       # SSH-Key für GitLab generieren (Falls noch nicht vorhanden)
       puts "🔑 Überprüfe GitLab SSH-Key..."
       if test("[ ! -f ~/.ssh/id_rsa.pub ]")
@@ -103,7 +135,7 @@ namespace :server do
         execute "cat ~/.ssh/id_rsa.pub"
         puts "🚀 SSH-Key generiert! Füge ihn in GitLab unter https://gitlab.com/-/user_settings/ssh_keys hinzu."
       end
-      
+
 
       puts "✅ Server-Setup abgeschlossen!"
     end
