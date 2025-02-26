@@ -2,13 +2,23 @@
 ### HTTP-Config generated with magic_recipes_two at: <%= Time.now.strftime("%Y-%m-%d .. %H:%M .. %Z") %>
 ###
 
-upstream thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
+<% if fetch(:rails_application_server) == :thin %>
+upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
   <% fetch(:app_instances).to_i.times do |i| %>
   server unix:/tmp/thin.<%= fetch(:application) %>.<%= fetch(:stage) %>.<%= i %>.sock 
          max_fails=1 
          fail_timeout=15s;
   <% end %>
 }
+<% else %>
+upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
+  <% fetch(:app_instances).to_i.times do |i| %>
+  server unix:<%= shared_path %>/tmp/sockets/puma.<%= i %>.sock
+         max_fails=1
+         fail_timeout=15s;
+  <% end %>
+}
+<% end %>
 
 <%= render2go("nginx/rails_cache_path") %>
 <%= render2go("nginx/media_cache_path") %>
@@ -104,15 +114,15 @@ server {
 
   <%= render2go("nginx/media_cache_server") %>
 
-  try_files $uri/index.html $uri @thin_<%= fetch(:application) %>_<%= fetch(:stage) %>;
+  try_files $uri/index.html $uri @app_<%= fetch(:application) %>_<%= fetch(:stage) %>;
 
-  location @thin_<%= fetch(:application) %>_<%= fetch(:stage) %> {
+  location @app_<%= fetch(:application) %>_<%= fetch(:stage) %> {
     proxy_set_header X-Real-IP          $remote_addr;
     proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto  $scheme;
     proxy_set_header Host               $host:$server_port;
     proxy_redirect    off;
     <%= render2go("nginx/rails_cache_server") %>
-    proxy_pass        http://thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
+    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
   }
 }

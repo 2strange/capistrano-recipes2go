@@ -11,7 +11,13 @@ namespace :load do
     set :nginx_redirect_subdomains, -> { false }
     set :nginx_remove_www,        -> { true }
     set :default_site,            -> { false }
-    set :app_instances,           -> { 1 }
+
+
+    ## Rails Application Server
+    set :app_instances,             -> { 1 }
+    set :rails_application_server,  -> { :puma }  # Default to Puma, can be :thin
+
+
     set :nginx_roles,             -> { :web }
     set :nginx_log_path,          -> { "#{shared_path}/log" }
     set :nginx_root_path,         -> { "/etc/nginx" }

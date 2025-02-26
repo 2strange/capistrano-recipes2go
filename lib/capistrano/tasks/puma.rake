@@ -10,8 +10,16 @@ namespace :load do
     set :puma_socket,             -> { "#{shared_path}/tmp/sockets/puma.sock" }
     set :puma_state,              -> { "#{shared_path}/puma.state" }
     set :puma_log_path,           -> { "#{shared_path}/log/puma.log" }
-    set :puma_workers,            -> { 2 }
-    set :puma_threads,            -> { [4, 16] }
+
+    ## Puma Performance Configuration
+    set :puma_workers,            -> { fetch(:app_instances, 1) } # Number of workers
+    set :puma_threads,            -> { [4, 8] } # (min, max) threads per worker
+    ## Example decision:
+    # => Small app (low traffic) ➝ 1 worker, 4-8 threads.
+    # => Medium app ➝ 2 workers, 8-16 threads.
+    # => Large app (high traffic) ➝ 4+ workers, 16+ threads.
+    
+
     set :puma_preload_app,        -> { true }
     set :puma_min_threads,        -> { fetch(:puma_threads).first }
     set :puma_max_threads,        -> { fetch(:puma_threads).last }
@@ -30,11 +38,7 @@ namespace :puma do
 
   def upload_puma_service
     puts "📤 Uploading Puma systemd service..."
-    if fetch(:puma_ruby_vm) == :rvm
-      @puma_command = "#{ rvm_command } bundle exec puma"
-    else
-      @puma_command = "/usr/local/bin/bundle exec puma"
-    end
+    @puma_command = fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command} bundle exec puma" : "/usr/local/bin/bundle exec puma"
 
     template2go("puma_service", "/tmp/puma.service")
     execute :sudo, :mv, "/tmp/puma.service", "#{fetch(:puma_systemd_path)}/#{fetch(:puma_service_file)}.service"

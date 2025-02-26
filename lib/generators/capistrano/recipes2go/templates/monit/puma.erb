@@ -1,0 +1,4 @@
+check process puma_<%= fetch(:application) %>_<%= fetch(:stage) %> with pidfile <%= fetch(:puma_pid_path) %>/puma.pid
+  start program = "/bin/systemctl start <%= fetch(:puma_service_file) %>"
+  stop program  = "/bin/systemctl stop <%= fetch(:puma_service_file) %>"
+  if totalmem > 500 MB for 5 cycles then restart
