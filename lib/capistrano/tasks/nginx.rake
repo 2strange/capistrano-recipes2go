@@ -138,7 +138,7 @@ namespace :nginx do
     end
 
     desc "Check nginx configuration"
-    task :check_conf do
+    task :check_config do
       on release_roles fetch(:nginx_roles) do
         puts "🧐 Checking nginx configuration..."
         execute :sudo, "nginx -t"

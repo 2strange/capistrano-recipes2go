@@ -45,8 +45,8 @@ namespace :certbot do
         puts "⚠️  No email address is set for Let's Encrypt!"
         puts "➡️  A valid email is required to receive expiration notifications."
         puts "➡️  Please enter a valid email address:"
-        certbot_email = ask(:certbot_email, "Email for Let's Encrypt:")
-        set(:certbot_email, certbot_email)
+        ask(:certbot_email, "Enter email for Let's Encrypt:")
+        set(:certbot_email, fetch(:certbot_email)) # Store response
       end
 
       # 2️⃣ Check if `--expand` is needed
@@ -73,7 +73,7 @@ namespace :certbot do
       end.join(" ")
 
       # 4️⃣ Execute Certbot
-      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{certbot_email} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
+      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:certbot_email)} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
     end
   end
   
