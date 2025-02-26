@@ -10,6 +10,13 @@ Group=<%= fetch(:puma_user) %>
 WorkingDirectory=<%= current_path %>
 ExecStart=<%= @puma_command %> -C <%= shared_path %>/config/puma.rb
 
+# PID-File explizit setzen für Monit/Überwachung
+PIDFile=<%= fetch(:puma_pid_path) %>/puma.pid
+
+# Startpost Befehl: MainPID schreiben
+ExecStartPost=/bin/bash -c 'echo $MAINPID > <%= fetch(:puma_pid_path) %>/puma.pid'
+ExecStopPost=/bin/bash -c 'rm -f <%= fetch(:puma_pid_path) %>/puma.pid'
+
 Restart=always
 RestartSec=5
 StartLimitBurst=3
