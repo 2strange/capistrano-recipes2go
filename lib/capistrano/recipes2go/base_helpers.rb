@@ -30,8 +30,8 @@ module Capistrano
             File.join('config', 'deploy', 'templates', "#{from}"),
             File.join('lib', 'capistrano', 'templates', "#{from}.erb"),
             File.join('lib', 'capistrano', 'templates', "#{from}"),
-            File.expand_path("../../../generators/capistrano/magic_recipes/templates/#{from}.erb", __FILE__),
-            File.expand_path("../../../generators/capistrano/magic_recipes/templates/#{from}", __FILE__)
+            File.expand_path("../../../generators/capistrano/recipes2go/templates/#{from}.erb", __FILE__),
+            File.expand_path("../../../generators/capistrano/recipes2go/templates/#{from}", __FILE__)
         ].each do |path|
           return File.read(path) if File.file?(path)
         end
