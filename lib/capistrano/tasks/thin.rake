@@ -45,6 +45,7 @@ namespace :thin do
   def upload_thin_config
     puts "📤 Uploading Thin configuration..."
     template2go("thin_config", '/tmp/thin_app.yml')
+    # Speichern im shared_path (Capistrano erwartet das so!)
     execute :sudo, :mv, '/tmp/thin_app.yml', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
   end
 
@@ -126,15 +127,16 @@ namespace :thin do
       end
     end
   end
-
-
-  task :symlink_thin_config do
-    append :linked_files, "thin_app_<%= fetch(:stage) %>.yml"
-  end
-
-  after 'deploy:started', 'thin:symlink_thin_config'
   
 end
+
+
+namespace :load do
+  task :defaults do
+    append :linked_files, "config/thin_app_<%= fetch(:stage) %>.yml"
+  end
+end
+
 
 namespace :deploy do
   after 'deploy:published', :restart_thin_apps do
