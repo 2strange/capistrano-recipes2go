@@ -46,13 +46,6 @@ namespace :thin do
     puts "📤 Uploading Thin configuration..."
     template2go("thin_config", '/tmp/thin_app.yml')
     execute :sudo, :mv, '/tmp/thin_app.yml', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
-
-    ### outdated, maybe pre-systemd-times
-    # Ensure the thin config directory exists
-    # execute :sudo, :mkdir, "-p", fetch(:thin_path)
-    # Symlink the config file to /etc/thin/ 
-    # execute :sudo, :rm, ' -f', "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}*"
-    # execute :sudo, :ln, '-sf', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml", "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}.yml"
   end
 
   def rvm_command
