@@ -1,0 +1,12 @@
+<%= fetch :pg_env %>:
+  adapter: postgresql
+  encoding: <%= fetch :pg_encoding %>
+  database: <%= fetch :pg_database %>
+  pool: <%= fetch :pg_pool %>
+  username: <%= fetch :pg_username %>
+  password: '<%= fetch :pg_password %>'
+  host: <%= fetch :pg_host %>
+  socket: <%= fetch :pg_socket %>
+  port: <%= fetch :pg_port %>
+  timeout: <%= fetch :pg_timeout %>
+  <% if fetch(:pg_disable_gssencmode, false) %>gssencmode: "disable"<% end %>
