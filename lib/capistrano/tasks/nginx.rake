@@ -107,13 +107,13 @@ namespace :nginx do
         execute :sudo, "ls -l #{fetch(:nginx_sites_enabled)}"
       end
     end
-    
+
 
     desc 'Creates and uploads the Nginx site configuration'
     task :add do
       on release_roles fetch(:nginx_roles) do
         # Explicitly invoke load_vars to ensure variables are loaded
-        invoke 'nginx:load_vars'
+        # invoke 'nginx:load_vars'
 
         available_path = fetch(:sites_available)
 
@@ -143,6 +143,7 @@ namespace :nginx do
     desc 'Enable site by creating a symbolic link'
     task :enable do
       on release_roles fetch(:nginx_roles) do
+        
         if test "! [ -h #{fetch(:enabled_application)} ]"
           execute :sudo, :ln, "-s", fetch(:available_application), fetch(:enabled_application)
           invoke "nginx:reload"
@@ -170,6 +171,10 @@ namespace :nginx do
     end
     
   end
+
+  # Explicitly invoke load_vars to ensure variables are loaded
+  before :site, :load_vars
+
 end
 
 namespace :deploy do
