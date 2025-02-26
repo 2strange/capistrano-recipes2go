@@ -13,19 +13,18 @@ namespace :load do
     set :thin_require,                -> { [] }
     set :thin_wait,                   -> { 90 }
     set :thin_onebyone,               -> { true }
-    # https://help.cloud66.com/rails/how-to-guides/rack-servers/thin-rack-server.html
-    # You should not daemonize the custom_web process !!!
-    set :thin_daemonize,              -> { false }
-    set :thin_hooks,                  -> { true }
     
+    set :thin_daemonize,              -> { false } # Thin should not daemonize itself
+    set :thin_hooks,                  -> { true }  # Enables automatic setup/restart
+
     set :thin_daemon_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )
     set :thin_daemon_file,            -> { "thin_#{fetch(:application)}_#{fetch(:stage)}" }
     set :thin_daemon_path,            -> { "/lib/systemd/system" }
     set :thin_pid_path,               -> { "#{shared_path}/pids" }
     set :thin_daemon_template,        -> { :default }
     set :thin_daemon_log_lines,       -> { 100 }
-    set :thin_daemon_user,            -> { fetch(:user, 'deploy') }  # role-user
-    
+    set :thin_daemon_user,            -> { fetch(:user, 'deploy') }  # Defaults to deploy user
+
   end
 end
 
@@ -47,82 +46,76 @@ namespace :thin do
     puts "📤 Uploading Thin configuration..."
     template2go("thin_config", '/tmp/thin_app.yml')
     execute :sudo, :mv, '/tmp/thin_app.yml', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
-    execute :sudo, :ln, '-sf', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml", "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}.yml"
+
+    ### outdated, maybe pre-systemd-times
+    # Ensure the thin config directory exists
+    # execute :sudo, :mkdir, "-p", fetch(:thin_path)
+    # Symlink the config file to /etc/thin/ 
+    # execute :sudo, :rm, ' -f', "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}*"
+    # execute :sudo, :ln, '-sf', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml", "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}.yml"
   end
 
   def rvm_command
-    ## systemd needs absolute paths!
+    ## Systemd requires absolute paths for RVM execution
     "/home/#{ fetch(:thin_daemon_user) }/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
   end
-  
-  
-  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-  
-  
+
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
   desc 'Upload only the Thin daemon file'
   task :upload_daemon  do
     on roles fetch(:thin_roles) do
-      within current_path do
-        upload_thin_daemon
-      end
+      upload_thin_daemon
     end
   end
 
   desc "Upload only the Thin config file"
   task :reconf do
     on release_roles fetch(:thin_roles) do
-      within current_path do
-        upload_thin_config
-      end
+      upload_thin_config
     end
   end
 
-
-  desc "Setup Thin: Upload service, config, and enable"
+  desc "Initial Thin Setup (Upload service & config, but don't enable yet)"
   task :setup do
     on roles fetch(:thin_roles) do
-      within current_path do
-        upload_thin_daemon
-        upload_thin_config
-        invoke "thin:enable"
-        invoke "thin:start"
-        puts "✅ Thin service setup completed!"
-      end
+      upload_thin_daemon
+      upload_thin_config
+      puts "✅ Thin setup completed. Service is NOT yet enabled or started."
     end
   end
-  
-  
+
+  desc "Activate and start Thin service"
+  task :activate do
+    on roles fetch(:thin_roles) do
+      invoke "thin:enable"
+      invoke "thin:start"
+      puts "✅ Thin service activated and running!"
+    end
+  end
   
   %w[start stop restart enable disable is-enabled].each do |cmnd|
     desc "#{cmnd.capitalize} Thin service"
     task cmnd.gsub(/-/, '_') do
       on roles fetch(:thin_roles) do
-        within current_path do
-          execute :sudo, :systemctl, cmnd, fetch(:thin_daemon_file)
-        end
+        execute :sudo, :systemctl, cmnd, fetch(:thin_daemon_file)
       end
     end
   end
   
-  desc "Quiet Thin service"
+  desc "Quiet Thin service (TSTP signal)"
   task :quiet do
     on roles fetch(:thin_roles) do
-      within current_path do
-        execute :sudo, :systemctl, 'kill -s TSTP', fetch(:thin_daemon_file)
-      end
+      execute :sudo, :systemctl, 'kill -s TSTP', fetch(:thin_daemon_file)
     end
   end
   
   desc "Get logs for Thin service"
   task :logs do
     on roles fetch(:thin_roles) do
-      within current_path do
-        execute :sudo, :journalctl, '-u', fetch(:thin_daemon_file), '-rn', fetch(:thin_daemon_log_lines, 100)
-      end
+      execute :sudo, :journalctl, '-u', fetch(:thin_daemon_file), '-rn', fetch(:thin_daemon_log_lines, 100)
     end
   end
-  
   
   desc "Check Thin service status"
   task :check_status do
@@ -140,12 +133,15 @@ namespace :thin do
       end
     end
   end
-  
+
+
+  task :symlink_thin_config do
+    append :linked_files, "thin_app_<%= fetch(:stage) %>.yml"
+  end
+
+  after 'deploy:started', 'thin:symlink_thin_config'
   
 end
-
-
-
 
 namespace :deploy do
   after 'deploy:published', :restart_thin_apps do
@@ -156,3 +152,13 @@ namespace :deploy do
   end
 end
 
+
+namespace :setup do
+  desc "Prepare server for deployment (Uploads Thin config & daemon, but does NOT activate)"
+  task :prepare do
+    on roles fetch(:thin_roles) do
+      invoke "thin:setup"
+      puts "✅ Server setup completed! Ready for deployment."
+    end
+  end
+end
