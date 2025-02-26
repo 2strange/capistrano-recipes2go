@@ -1,6 +1,6 @@
 require 'stringio'
-require 'capistrano/recipes2go/postgres_helpers'
-include Capistrano::Recipes2go::PostgresHelpers
+require 'capistrano/recipes2go/postgresql_helpers'
+include Capistrano::Recipes2go::PostgresqlHelpers
 
 namespace :load do
   task :defaults do
