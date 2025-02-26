@@ -173,7 +173,7 @@ namespace :nginx do
   end
 
   # Explicitly invoke load_vars to ensure variables are loaded
-  before :site, :load_vars
+  before 'nginx:site', :load_vars
 
 end
 
