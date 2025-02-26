@@ -37,10 +37,10 @@ require 'capistrano/recipes2go/db'          # Database helpers (seed + yaml_db t
 require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
 require 'capistrano/recipes2go/nginx'       # Nginx helpers
 require 'capistrano/recipes2go/nvm'         # Node Version Manager helpers
+require 'capistrano/recipes2go/postgresql'  # Postgresql .. taken from capistrano-postgresql, which is not maintained anymore
 require 'capistrano/recipes2go/thin'        # Thin helpers
 require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
-require 'capistrano/recipes2go/postgresql'  # Postgresql .. taken from capistrano-postgresql, which is not maintained anymore
 
 ```
 
