@@ -51,7 +51,8 @@ namespace :server do
       puts "🚀 Starting server setup..."
 
       # Update and upgrade system packages
-      execute :sudo, "apt update -y && apt upgrade -y"
+      execute :sudo, "apt update -y"
+      execute :sudo, "apt upgrade -y"
       execute :sudo, "apt install -y build-essential bison curl git-core git rsync"
 
       # Create the deploy user if not already existing and required
