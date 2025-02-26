@@ -19,7 +19,7 @@ And then execute:
 $ bundle
 ```
 
-The gem already includes `capistrano`, `capistrano-rails` and `capistrano-rvm` .. so actually thats all you need to deploy your app.
+The gem already includes `capistrano`, `capistrano-rails` and `capistrano-rvm` .. so actually thats all you need to deploy your rails app.
 
 
 In Capfile:
@@ -38,6 +38,8 @@ require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
 require 'capistrano/recipes2go/nginx'       # Nginx helpers
 require 'capistrano/recipes2go/thin'        # Thin helpers
 require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
+
+require 'capistrano/recipes2go/postgresql'  # Postgresql .. taken from capistrano-postgresql, which is not maintained anymore
 
 ```
 
