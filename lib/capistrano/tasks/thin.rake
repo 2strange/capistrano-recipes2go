@@ -133,7 +133,7 @@ end
 
 namespace :load do
   task :defaults do
-    append :linked_files, "config/thin_app_<%= fetch(:stage) %>.yml"
+    append :linked_files, "config/thin_app_#{ fetch(:stage) }.yml"
   end
 end
 
