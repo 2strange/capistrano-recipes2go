@@ -1,0 +1,36 @@
+[Unit]
+Description=<%= @service_file %>
+After=syslog.target network.target
+
+[Service]
+Type=notify
+WatchdogSec=10
+
+WorkingDirectory=<%= current_path %>
+
+<% if fetch(:sidekiq_ruby_vm) == :rvm %>
+ExecStart=<%= rvm_command %> bundle exec sidekiq <%= @side_kiq_args %>
+<% else %>
+ExecStart=/usr/local/bin/bundle exec sidekiq <%= @side_kiq_args %>
+<% end %>
+
+## Ensure PID-File is created and removed properly
+ExecStartPost=/bin/bash -c 'echo $MAINPID > <%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid'
+ExecStopPost=/bin/bash -c 'rm -f <%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid'
+
+User=<%= fetch(:sidekiq_user) %>
+Group=<%= fetch(:sidekiq_user) %>
+UMask=0002
+
+Environment=MALLOC_ARENA_MAX=2
+
+RestartSec=1
+Restart=on-failure
+
+## Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sidekiq_<%= fetch(:application) %>
+
+[Install]
+WantedBy=multi-user.target

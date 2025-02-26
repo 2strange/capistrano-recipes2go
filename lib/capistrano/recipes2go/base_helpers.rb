@@ -5,7 +5,12 @@ module Capistrano
   module Recipes2go
     module BaseHelpers
       
+      def rvm_command
+        ## Systemd requires absolute paths for RVM execution
+        "/home/#{ fetch(:thin_daemon_user) }/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
+      end
       
+
       def template2go(from, to)
         erb = get_template_file(from)
         upload! StringIO.new( ERB.new(erb).result(binding) ), to

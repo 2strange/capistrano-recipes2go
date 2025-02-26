@@ -2,7 +2,7 @@ namespace :load do
   task :defaults do
     set :nvm_version, -> { 'v0.39.7' }  # Change for newer versions
     set :nvm_install_path, -> { "$HOME/.nvm" }
-    set :node_version, -> { '18' }  # Default Node.js version
+    set :node_version, -> { '23' }  # Default Node.js version
     set :nvm_roles, -> { :app }
   end
 end

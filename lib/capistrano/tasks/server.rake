@@ -12,7 +12,7 @@ namespace :load do
 
     # Node.js version and NVM installation
     set :srvr_install_nvm,          -> { true }
-    set :srvr_nvm_node_version,     -> { "18" }
+    set :srvr_nvm_node_version,     -> { "23" }
 
     # Install core services
     set :srvr_install_nginx,        -> { true }
@@ -121,11 +121,24 @@ namespace :server do
         execute "nvm install #{nvm_node_version} --default"
       end
 
+      # Install Certbot for Let's Encrypt
+      if install_certbot
+        puts "🔒 Installing Certbot..."
+        execute :sudo, "apt update"
+        execute :sudo, "apt install -y certbot"
+      end
+
       # Configure UFW firewall
       if enable_firewall
+        if test("[ -z \"$(command -v ufw)\" ]")
+          puts "🔄 Installing UFW..."
+          execute :sudo, "apt update && apt install -y ufw"
+        end
         puts "🛡️ Configuring UFW firewall..."
         execute :sudo, "ufw allow OpenSSH"
-        execute :sudo, "ufw allow 'Nginx Full'" if install_nginx
+        # execute :sudo, "ufw allow 'Nginx Full'" if install_nginx
+        execute :sudo, "ufw allow 80"   # HTTP
+        execute :sudo, "ufw allow 443"  # HTTPS
         ufw_additional_ports.each do |port|
           execute :sudo, "ufw allow #{port}"
         end

@@ -49,11 +49,6 @@ namespace :thin do
     execute :sudo, :mv, '/tmp/thin_app.yml', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
   end
 
-  def rvm_command
-    ## Systemd requires absolute paths for RVM execution
-    "/home/#{ fetch(:thin_daemon_user) }/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
-  end
-
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
   desc 'Upload only the Thin daemon file'
