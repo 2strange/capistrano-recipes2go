@@ -10,21 +10,25 @@ Group=<%= fetch(:thin_daemon_user) %>
 
 WorkingDirectory=<%= current_path %>
 
+# Ensure PID directory exists
+ExecStartPre=/bin/mkdir -p <%= fetch(:thin_pid_path) %>
+ExecStartPre=/bin/chown <%= fetch(:thin_daemon_user) %>:<%= fetch(:thin_daemon_user) %> <%= fetch(:thin_pid_path) %>
+
 <% if fetch(:thin_daemon_ruby_vm) == :rvm %>
-ExecStart=<%= rvm_command %> bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml start
-ExecStop=<%= rvm_command %> bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml stop
-ExecReload=<%= rvm_command %> bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml restart
+ExecStart=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml start'
+ExecStop=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml stop'
+ExecReload=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml restart'
 <% else %>
-ExecStart=/usr/local/bin/bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml start
-ExecStop=/usr/local/bin/bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml stop
-ExecReload=/usr/local/bin/bundle exec thin -C config/thin_app_<%= fetch(:stage) %>.yml restart
+ExecStart=/usr/bin/env bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml start
+ExecStop=/usr/bin/env bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml stop
+ExecReload=/usr/bin/env bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml restart
 <% end %>
 
 # Ensure systemd correctly tracks the Thin process
 PIDFile=<%= fetch(:thin_pid_path) %>/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_sysd.pid
 
-# Build PID file after startup
-ExecStartPost=/bin/bash -c 'echo $MAINPID > <%= fetch(:thin_pid_path) %>/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_sysd.pid'
+ExecStartPost=/bin/bash -c 'pgrep -f "thin.*<%= fetch(:application) %>" > <%= fetch(:thin_pid_path) %>/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_sysd.pid'
+
 ExecStopPost=/bin/bash -c 'rm -f <%= fetch(:thin_pid_path) %>/thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_sysd.pid'
 
 TimeoutStartSec=<%= fetch(:thin_wait) %>
