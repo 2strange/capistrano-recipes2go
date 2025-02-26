@@ -33,12 +33,21 @@ end
 namespace :thin do
   
   def upload_thin_daemon
+    puts "📤 Uploading Thin systemd service..."
     if fetch(:thin_daemon_template, :default) == :default
       template2go("thin_service", '/tmp/thin_service')
     else
       template2go(fetch(:thin_daemon_template), '/tmp/thin_service')
     end
-    execute :sudo, :mv, '/tmp/thin_service', "#{ fetch(:thin_daemon_path) }/#{ fetch(:thin_daemon_file) }.service"
+    execute :sudo, :mv, '/tmp/thin_service', "#{fetch(:thin_daemon_path)}/#{fetch(:thin_daemon_file)}.service"
+    execute :sudo, "systemctl daemon-reload"
+  end
+
+  def upload_thin_config
+    puts "📤 Uploading Thin configuration..."
+    template2go("thin_config", '/tmp/thin_app.yml')
+    execute :sudo, :mv, '/tmp/thin_app.yml', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
+    execute :sudo, :ln, '-sf', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml", "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}.yml"
   end
 
   def rvm_command
@@ -50,25 +59,34 @@ namespace :thin do
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
   
   
-  desc 'Create and upload thin daemon file'
+  desc 'Upload only the Thin daemon file'
   task :upload_daemon  do
     on roles fetch(:thin_roles) do
       within current_path do
-        upload_thin_daemon()
+        upload_thin_daemon
       end
     end
   end
-  
-  
-  desc "Create and upload thin config file"
+
+  desc "Upload only the Thin config file"
   task :reconf do
     on release_roles fetch(:thin_roles) do
       within current_path do
-        template2go("thin_config", '/tmp/thin_app.yml')
-        execute :sudo, :mv, '/tmp/thin_app.yml', "config/thin_app_#{fetch(:stage)}.yml"
-        execute :sudo, :rm, ' -f', "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}*"
-        execute :sudo, :cp, ' -f', "#{current_path}/config/thin_app_#{fetch(:stage)}.yml", "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml"
-        execute :sudo, :ln, ' -sf', "#{shared_path}/config/thin_app_#{fetch(:stage)}.yml", "#{fetch(:thin_path)}/thin_#{fetch(:application)}_#{fetch(:stage)}.yml"
+        upload_thin_config
+      end
+    end
+  end
+
+
+  desc "Setup Thin: Upload service, config, and enable"
+  task :setup do
+    on roles fetch(:thin_roles) do
+      within current_path do
+        upload_thin_daemon
+        upload_thin_config
+        invoke "thin:enable"
+        invoke "thin:start"
+        puts "✅ Thin service setup completed!"
       end
     end
   end
@@ -76,7 +94,7 @@ namespace :thin do
   
   
   %w[start stop restart enable disable is-enabled].each do |cmnd|
-    desc "#{cmnd.capitalize} thin service"
+    desc "#{cmnd.capitalize} Thin service"
     task cmnd.gsub(/-/, '_') do
       on roles fetch(:thin_roles) do
         within current_path do
@@ -86,7 +104,7 @@ namespace :thin do
     end
   end
   
-  desc "Quiet thin service"
+  desc "Quiet Thin service"
   task :quiet do
     on roles fetch(:thin_roles) do
       within current_path do
@@ -95,7 +113,7 @@ namespace :thin do
     end
   end
   
-  desc "Get logs for thin service"
+  desc "Get logs for Thin service"
   task :logs do
     on roles fetch(:thin_roles) do
       within current_path do
@@ -105,7 +123,7 @@ namespace :thin do
   end
   
   
-  desc "check thin service status"
+  desc "Check Thin service status"
   task :check_status do
     on roles fetch(:thin_roles) do
       within current_path do
@@ -126,12 +144,6 @@ namespace :thin do
 end
 
 
-# => after 'deploy:published', nil do
-# =>   on release_roles fetch(:thin_roles) do
-# =>     invoke "thin:reconf"
-# =>     invoke "thin:restart"
-# =>   end
-# => end
 
 
 namespace :deploy do
