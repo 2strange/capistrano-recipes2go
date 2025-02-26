@@ -1,0 +1,23 @@
+# Puma configuration file
+
+directory '<%= current_path %>'
+environment '<%= fetch(:stage) %>'
+
+bind 'unix://<%= fetch(:puma_socket) %>'
+pidfile '<%= fetch(:puma_pid_path) %>/puma.pid'
+state_path '<%= fetch(:puma_state) %>'
+stdout_redirect '<%= fetch(:puma_log_path) %>', '<%= fetch(:puma_log_path) %>', true
+
+workers <%= fetch(:puma_workers) %>
+threads <%= fetch(:puma_min_threads) %>, <%= fetch(:puma_max_threads) %>
+
+preload_app!
+
+daemonize false
+
+activate_control_app 'unix://<%= fetch(:puma_socket) %>.ctl'
+
+on_restart do
+  puts 'Refreshing Gemfile'
+  ENV["BUNDLE_GEMFILE"] = "<%= current_path %>/Gemfile"
+end

@@ -25,6 +25,10 @@ namespace :load do
     set :thin_daemon_log_lines,       -> { 100 }
     set :thin_daemon_user,            -> { fetch(:user, 'deploy') }  # Defaults to deploy user
 
+    
+    ## symlink thin config file
+    append :linked_files, "config/thin_app_#{ fetch(:stage) }.yml"
+
   end
 end
 
@@ -125,12 +129,6 @@ namespace :thin do
   
 end
 
-
-namespace :load do
-  task :defaults do
-    append :linked_files, "config/thin_app_#{ fetch(:stage) }.yml"
-  end
-end
 
 
 namespace :deploy do
