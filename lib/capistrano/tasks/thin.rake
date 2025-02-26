@@ -40,6 +40,10 @@ namespace :thin do
     end
     execute :sudo, :mv, '/tmp/thin_service', "#{ fetch(:thin_daemon_path) }/#{ fetch(:thin_daemon_file) }.service"
   end
+
+  def rvm_command
+    "#{fetch(:rvm_path)}/bin/rvm #{fetch(:rvm_ruby_version)} do"
+  end
   
   
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
