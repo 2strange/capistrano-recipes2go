@@ -12,7 +12,6 @@ namespace :load do
     set :nginx_remove_www,        -> { true }
     set :default_site,            -> { false }
     set :app_instances,           -> { 1 }
-    set :nginx_service_path,      -> { 'systemctl' } # Use systemd instead of service
     set :nginx_roles,             -> { :web }
     set :nginx_log_path,          -> { "#{shared_path}/log" }
     set :nginx_root_path,         -> { "/etc/nginx" }
@@ -20,12 +19,8 @@ namespace :load do
     set :nginx_template,          -> { :default }
     set :nginx_use_ssl,           -> { false }
 
-    # Define simplified paths
-    set :nginx_sites_available,   -> { File.join(fetch(:nginx_root_path), "sites-available") }
-    set :nginx_sites_enabled,     -> { File.join(fetch(:nginx_root_path), "sites-enabled") }
-    set :nginx_app_config,        -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-    set :nginx_available_path,    -> { File.join(fetch(:nginx_sites_available), fetch(:nginx_app_config)) }
-    set :nginx_enabled_path,      -> { File.join(fetch(:nginx_sites_enabled), fetch(:nginx_app_config)) }
+    # Define Nginx Site Name
+    set :nginx_site_name,        -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 
     # SSL Paths
     set :nginx_ssl_cert,  -> { "/etc/letsencrypt/live/#{fetch(:nginx_major_domain, fetch(:nginx_domains).first)}/fullchain.pem" }
@@ -48,83 +43,126 @@ end
 
 namespace :nginx do
 
-  %w[start stop restart reload].each do |command|
-    desc "#{command.capitalize} nginx service"
-    task command do
-      on release_roles fetch(:nginx_roles) do
-        if command == 'stop' || test("[ $(sudo nginx -t 2>&1 | grep -c 'fail') -eq 0 ]")
-          execute :sudo, "systemctl #{command} nginx"
-        end
-      end
-    end
-  end
-
-  desc "Check nginx configuration"
-  task :check_config do
-    on release_roles fetch(:nginx_roles) do
-      execute :sudo, "nginx -t"
-    end
-  end
-
-  desc "Check nginx status"
-  task :check_status do
-    on release_roles fetch(:nginx_roles) do
-      execute :sudo, "systemctl status nginx --no-pager"
-    end
-  end
-
   namespace :site do
-    desc "List available and enabled sites"
-    task :list do
-      on release_roles fetch(:nginx_roles) do
-        execute :sudo, "ls -l #{fetch(:nginx_sites_available)}"
-        execute :sudo, "ls -l #{fetch(:nginx_sites_enabled)}"
-      end
-    end
-
-    desc 'Creates and uploads the Nginx site configuration'
-    task :add do
+    desc "Upload Nginx site configuration"
+    task :upload do
       on release_roles fetch(:nginx_roles) do
         config_file = fetch(:nginx_template)
-        target_config = fetch(:nginx_app_config)
+        target_config = fetch(:nginx_site_name)
+
+        puts "📤 Uploading Nginx config: #{target_config}..."
       
         if config_file == :default
           template2go("nginx.conf", "/tmp/#{target_config}")
         else
           template2go(config_file, "/tmp/#{target_config}")
         end
-      
-        execute :sudo, :mv, "/tmp/#{target_config}", fetch(:nginx_available_path)
+
+        execute :sudo, :mv, "/tmp/#{target_config}", "/etc/nginx/sites-available/#{target_config}"
       end
     end
 
-    desc 'Enable site by creating a symbolic link'
+    desc "Enable Nginx site (creates symlink)"
     task :enable do
       on release_roles fetch(:nginx_roles) do
-        if test "! [ -h #{fetch(:nginx_enabled_path)} ]"
-          execute :sudo, :ln, "-s", fetch(:nginx_available_path), fetch(:nginx_enabled_path)
+        enabled_path = "/etc/nginx/sites-enabled/#{fetch(:nginx_site_name)}"
+        available_path = "/etc/nginx/sites-available/#{fetch(:nginx_site_name)}"
+
+        unless test "[ -h #{enabled_path} ]"
+          puts "🔗 Enabling Nginx site..."
+          execute :sudo, :ln, "-s", available_path, enabled_path
           invoke "nginx:reload"
+        else
+          puts "✅ Nginx site is already enabled!"
         end
       end
     end
 
-    desc 'Disable site by removing symbolic link'
+    desc "Disable Nginx site (removes symlink)"
     task :disable do
       on release_roles fetch(:nginx_roles) do
-        if test "[ -h #{fetch(:nginx_enabled_path)} ]"
-          execute :sudo, :rm, "-f", fetch(:nginx_enabled_path)
+        enabled_path = "/etc/nginx/sites-enabled/#{fetch(:nginx_site_name)}"
+        
+        if test "[ -h #{enabled_path} ]"
+          puts "🚫 Disabling Nginx site..."
+          execute :sudo, :rm, "-f", enabled_path
           invoke "nginx:reload"
+        else
+          puts "⚠️  Nginx site is not enabled!"
         end
       end
     end
 
-    desc 'Remove the Nginx site configuration'
+    desc "Remove Nginx site configuration"
     task :remove do
       on release_roles fetch(:nginx_roles) do
-        if test "[ -f #{fetch(:nginx_available_path)} ]"
-          execute :sudo, :rm, "-f", fetch(:nginx_available_path)
+        available_path = "/etc/nginx/sites-available/#{fetch(:nginx_site_name)}"
+        
+        if test "[ -f #{available_path} ]"
+          puts "🗑 Removing Nginx site configuration..."
+          execute :sudo, :rm, "-f", available_path
+        else
+          puts "⚠️  Nginx site configuration does not exist!"
         end
       end
+    end
+
+    desc "Reconfigure Nginx (Upload, Enable if needed, Restart)"
+    task :reconfigure do
+      on release_roles fetch(:nginx_roles) do
+        puts "🔄 Reconfiguring Nginx..."
+        invoke "nginx:site:upload"
+        
+        unless test "[ -h /etc/nginx/sites-enabled/#{fetch(:nginx_site_name)} ]"
+          invoke "nginx:site:enable"
+        else
+          puts "🔗 Site already enabled, skipping enable step!"
+        end
+        
+        invoke "nginx:service:restart"
+        puts "✅ Nginx reconfiguration complete!"
+      end
+    end
+
+  end
+
+  namespace :service do
+    %w[start stop restart reload].each do |command|
+      desc "#{command.capitalize} nginx service"
+      task command do
+        on release_roles fetch(:nginx_roles) do
+          puts "🔄 Running: systemctl #{command} nginx..."
+          execute :sudo, "systemctl #{command} nginx"
+        end
+      end
+    end
+
+    desc "Check nginx configuration"
+    task :check_conf do
+      on release_roles fetch(:nginx_roles) do
+        puts "🧐 Checking nginx configuration..."
+        execute :sudo, "nginx -t"
+      end
+    end
+
+    desc "Check nginx status"
+    task :check_status do
+      on release_roles fetch(:nginx_roles) do
+        puts "🔍 Checking nginx status..."
+        execute :sudo, "systemctl status nginx --no-pager"
+      end
+    end
+  end
+end
+
+namespace :setup do
+  desc "Prepare Nginx: Upload config but don't enable yet"
+  task :prepare do
+    on roles fetch(:nginx_roles) do
+      puts "⚙️  Ensuring Nginx directories exist..."
+      execute :sudo, "mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled"
+      invoke "nginx:site:upload"
+      puts "✅ Nginx setup completed! Enable it when ready with `cap nginx:site:enable`"
     end
   end
 end
@@ -132,9 +170,7 @@ end
 namespace :deploy do
   after 'deploy:finishing', :restart_nginx_app do
     if fetch(:nginx_hooks)
-      invoke "nginx:site:add"
-      invoke "nginx:site:enable"
-      invoke "nginx:restart"
+      invoke "nginx:site:reconfigure"
     end
   end
 end
