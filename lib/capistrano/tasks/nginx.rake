@@ -107,11 +107,24 @@ namespace :nginx do
         execute :sudo, "ls -l #{fetch(:nginx_sites_enabled)}"
       end
     end
+    
 
     desc 'Creates and uploads the Nginx site configuration'
     task :add do
       on release_roles fetch(:nginx_roles) do
-        within fetch(:sites_available) do
+        # Explicitly invoke load_vars to ensure variables are loaded
+        invoke 'nginx:load_vars'
+
+        available_path = fetch(:sites_available)
+
+        # Ensure sites_available is set correctly
+        if available_path.to_s.strip.empty?
+          error_message = "⚠️ ERROR: 'sites_available' is empty! Make sure 'nginx:load_vars' sets it correctly."
+          puts error_message
+          exit 1
+        end
+        
+        within available_path do
           config_file = fetch(:nginx_template)
           target_config = "#{fetch(:application)}_#{fetch(:stage)}"
         
@@ -121,10 +134,11 @@ namespace :nginx do
             template2go(config_file, "/tmp/#{target_config}")
           end
         
-          execute :sudo, :mv, "/tmp/#{target_config}", "#{fetch(:sites_available)}/#{target_config}"
+          execute :sudo, :mv, "/tmp/#{target_config}", "#{available_path}/#{target_config}"
         end
       end
     end
+
 
     desc 'Enable site by creating a symbolic link'
     task :enable do
