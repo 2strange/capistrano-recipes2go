@@ -1,5 +1,5 @@
 [Unit]
-Description=<%= fetch(:thin_daemon_file) %>
+Description=Thin Server for <%= fetch(:application) %>_<%= fetch(:stage) %>
 After=network.target syslog.target
 
 [Service]

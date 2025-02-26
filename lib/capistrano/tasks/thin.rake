@@ -51,7 +51,8 @@ namespace :thin do
   end
 
   def rvm_command
-    "#{fetch(:rvm_path)}/bin/rvm #{fetch(:rvm_ruby_version)} do"
+    ## systemd needs absolute paths!
+    "/home/#{ fetch(:thin_daemon_user) }/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
   end
   
   
