@@ -23,8 +23,8 @@ namespace :load do
     set :nginx_site_name,        -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 
     # SSL Paths
-    set :nginx_ssl_cert,  -> { "/etc/letsencrypt/live/#{fetch(:nginx_major_domain, fetch(:nginx_domains).first)}/fullchain.pem" }
-    set :nginx_ssl_key,   -> { "/etc/letsencrypt/live/#{fetch(:nginx_major_domain, fetch(:nginx_domains).first)}/privkey.pem" }
+    set :nginx_ssl_cert,  -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
+    set :nginx_ssl_key,   -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
 
     set :app_server_ip,   -> { "127.0.0.1" }
     set :nginx_hooks,     -> { true }

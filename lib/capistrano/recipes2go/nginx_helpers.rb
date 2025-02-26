@@ -31,6 +31,10 @@ module Capistrano
         fetch(:nginx_major_domain, false) ? clear_domain(fetch(:nginx_major_domain)) : false
       end
 
+      def cert_domain
+        fetch(:nginx_major_domain, false) ? fetch(:nginx_major_domain) : Array(fetch(:nginx_domains)).first
+      end
+
       def nginx_all_domains_with_www
         domains = []
         nginx_domains.each do |domain|
