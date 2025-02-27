@@ -55,7 +55,7 @@ namespace :puma do
     
     # Ensure the config folder exists
     ensure_shared_config_path()
-    
+
     execute :sudo, :mv, "/tmp/puma.rb", "#{shared_path}/config/puma.rb"
   end
 
@@ -138,12 +138,7 @@ namespace :deploy do
   end
 end
 
-namespace :setup do
-  desc "Prepare server for deployment (Uploads Puma config & daemon, but does NOT activate)"
-  task :prepare do
-    on roles fetch(:puma_roles) do
-      invoke "puma:setup"
-      puts "✅ Server setup completed! Ready for deployment."
-    end
-  end
+### Add Puma setup to the main setup task
+task :setup do
+  invoke "puma:setup"
 end

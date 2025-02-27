@@ -130,6 +130,17 @@ namespace :nginx do
       end
     end
 
+
+    ## Initiate Task, no desc .. so not in cap -T list
+    task :prepare do
+      on roles fetch(:nginx_roles) do
+        puts "⚙️  Ensuring Nginx directories exist..."
+        execute :sudo, "mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled"
+        invoke "nginx:site:upload"
+        puts "✅ Nginx setup completed! Enable it when ready with `cap nginx:site:enable`"
+      end
+    end
+
   end
 
   namespace :service do
@@ -172,6 +183,13 @@ namespace :setup do
     end
   end
 end
+
+### Add keys:setup to the main setup task
+task :setup do
+  invoke 'keys:site:prepare'
+end
+
+
 
 namespace :deploy do
   after 'deploy:finishing', :restart_nginx_app do

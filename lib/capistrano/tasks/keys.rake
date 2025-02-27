@@ -65,7 +65,7 @@ namespace :keys do
   end
 end
 
-desc 'Server setup tasks'
+### Add keys:setup to the main setup task
 task :setup do
   invoke 'keys:setup'
 end

@@ -77,12 +77,13 @@ namespace :nvm do
   end
 end
 
-namespace :setup do
-  desc "Setup NVM and Node.js (only needed once)"
-  task :prepare do
-    invoke "nvm:install"
-    invoke "nvm:install_node"
-    invoke "nvm:use"
-    puts "✅ NVM & Node.js setup complete!"
-  end
-end
+# Not in setup task by default to avoid running it multiple times
+## namespace :setup do
+##   desc "Setup NVM and Node.js (only needed once)"
+##   task :prepare do
+##     invoke "nvm:install"
+##     invoke "nvm:install_node"
+##     invoke "nvm:use"
+##     puts "✅ NVM & Node.js setup complete!"
+##   end
+## end

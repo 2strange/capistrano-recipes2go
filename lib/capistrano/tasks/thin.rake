@@ -25,7 +25,7 @@ namespace :load do
     set :thin_daemon_log_lines,       -> { 100 }
     set :thin_daemon_user,            -> { fetch(:user, 'deploy') }  # Defaults to deploy user
 
-    
+
     ## symlink thin config file
     append :linked_files, "config/thin_app_#{ fetch(:stage) }.yml"
 
@@ -141,12 +141,7 @@ namespace :deploy do
 end
 
 
-namespace :setup do
-  desc "Prepare server for deployment (Uploads Thin config & daemon, but does NOT activate)"
-  task :prepare do
-    on roles fetch(:thin_roles) do
-      invoke "thin:setup"
-      puts "✅ Server setup completed! Ready for deployment."
-    end
-  end
+### Add Thin setup to the main setup task
+task :setup do
+  invoke "thin:setup"
 end
