@@ -15,9 +15,9 @@ ExecStartPre=/bin/mkdir -p <%= fetch(:thin_pid_path) %>
 ExecStartPre=/bin/chown <%= fetch(:thin_daemon_user) %>:<%= fetch(:thin_daemon_user) %> <%= fetch(:thin_pid_path) %>
 
 <% if fetch(:thin_daemon_ruby_vm) == :rvm %>
-ExecStart=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml start'
-ExecStop=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml stop'
-ExecReload=/bin/bash -lc '<%= rvm_command %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml restart'
+ExecStart=/bin/bash -lc '<%= rvm_command(fetch(:thin_daemon_user)) %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml start'
+ExecStop=/bin/bash -lc '<%= rvm_command(fetch(:thin_daemon_user)) %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml stop'
+ExecReload=/bin/bash -lc '<%= rvm_command(fetch(:thin_daemon_user)) %> bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml restart'
 <% else %>
 ExecStart=/usr/bin/env bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml start
 ExecStop=/usr/bin/env bundle exec thin -C <%= current_path %>/config/thin_app_<%= fetch(:stage) %>.yml stop

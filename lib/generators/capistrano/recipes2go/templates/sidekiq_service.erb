@@ -9,7 +9,7 @@ WatchdogSec=10
 WorkingDirectory=<%= current_path %>
 
 <% if fetch(:sidekiq_ruby_vm) == :rvm %>
-ExecStart=<%= rvm_command %> bundle exec sidekiq <%= @side_kiq_args %>
+ExecStart=<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @side_kiq_args %>
 <% else %>
 ExecStart=/usr/local/bin/bundle exec sidekiq <%= @side_kiq_args %>
 <% end %>

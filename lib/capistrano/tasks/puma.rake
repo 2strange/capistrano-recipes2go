@@ -38,7 +38,7 @@ namespace :puma do
 
   def upload_puma_service
     puts "📤 Uploading Puma systemd service..."
-    @puma_command = fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command} bundle exec puma" : "/usr/local/bin/bundle exec puma"
+    @puma_command = fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:puma_user))} bundle exec puma" : "/usr/local/bin/bundle exec puma"
 
     template2go("puma_service", "/tmp/puma.service")
     
@@ -100,7 +100,7 @@ namespace :puma do
       on roles fetch(:puma_roles) do
         # Ensure pids directory exists only for start, restart, or enable
         ensure_shared_pids_path if %w[start restart enable].include?(command)
-        
+
         execute :sudo, :systemctl, command, fetch(:puma_service_file)
       end
     end
