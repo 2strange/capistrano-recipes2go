@@ -63,4 +63,4 @@ end
 #   invoke 'keys:setup'
 # end
 
-after "setup", "keys:setup"
+after "deploy:setup", "keys:setup"
