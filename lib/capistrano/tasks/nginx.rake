@@ -77,7 +77,7 @@ namespace :nginx do
         unless test "[ -h #{enabled_path} ]"
           puts "🔗 Enabling Nginx site..."
           execute :sudo, :ln, "-s", available_path, enabled_path
-          invoke "nginx:reload"
+          invoke "nginx:service:reload"
         else
           puts "✅ Nginx site is already enabled!"
         end
@@ -92,7 +92,7 @@ namespace :nginx do
         if test "[ -h #{enabled_path} ]"
           puts "🚫 Disabling Nginx site..."
           execute :sudo, :rm, "-f", enabled_path
-          invoke "nginx:reload"
+          invoke "nginx:service:reload"
         else
           puts "⚠️  Nginx site is not enabled!"
         end
