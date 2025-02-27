@@ -172,21 +172,11 @@ namespace :nginx do
   end
 end
 
-namespace :setup do
-  desc "Prepare Nginx: Upload config but don't enable yet"
-  task :prepare do
-    on roles fetch(:nginx_roles) do
-      puts "⚙️  Ensuring Nginx directories exist..."
-      execute :sudo, "mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled"
-      invoke "nginx:site:upload"
-      puts "✅ Nginx setup completed! Enable it when ready with `cap nginx:site:enable`"
-    end
-  end
-end
 
-### Add keys:setup to the main setup task
+
+### Add nginx setup to the main setup task
 task :setup do
-  invoke 'keys:site:prepare'
+  invoke 'nginx:site:prepare'
 end
 
 
