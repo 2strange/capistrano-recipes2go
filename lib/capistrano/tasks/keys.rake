@@ -5,7 +5,7 @@ namespace :load do
   task :defaults do
 
     ## Wanna use and deploy configuration.yml ?
-    set :keys_use_configuration, false
+    set :keys_use_configuration, -> { false }
 
     append :linked_files, 'config/master.key', 'config/credentials.yml.enc'
     append :linked_files, 'config/configuration.yml' if fetch(:keys_use_configuration, false)
