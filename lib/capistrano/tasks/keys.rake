@@ -23,7 +23,7 @@ namespace :keys do
       
       # Ensure the config folder exists
       ensure_shared_config_path()
-      
+
       run_locally { execute "rsync -av --delete #{local_dir} #{remote_dir}" }
     end
   end
@@ -68,4 +68,13 @@ end
 desc 'Server setup tasks'
 task :setup do
   invoke 'keys:setup'
+end
+
+
+namespace :deploy do
+  before :starting, :update_config do
+    on roles %w{app db web} do
+      invoke 'keys:upload_config' if fetch(:keys_use_configuration, false)
+    end
+  end
 end
