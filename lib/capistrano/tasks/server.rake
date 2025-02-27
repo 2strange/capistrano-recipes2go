@@ -131,7 +131,7 @@ namespace :server do
         # Ensure NVM is loaded at the top of ~/.bashrc
         execute <<-BASH
           if ! grep -q 'export NVM_DIR' ~/.bashrc; then
-            sed -i '1i export NVM_DIR="$HOME/.nvm"\n[ -s "$NVM_DIR/nvm.sh" ] && \\ . "$NVM_DIR/nvm.sh"\n[ -s "$NVM_DIR/bash_completion" ] && \\ . "$NVM_DIR/bash_completion"' ~/.bashrc
+              sed -i '1i export NVM_DIR="$HOME/.nvm"\n[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"\n[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' ~/.bashrc
           fi
         BASH
         execute "nvm install #{nvm_node_version} --default"
