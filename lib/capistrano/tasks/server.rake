@@ -137,7 +137,7 @@ namespace :server do
         # Ensure correct permissions
         execute :sudo, "chmod +x /etc/profile.d/nvm.sh"
 
-        execute :sudo, "source /etc/profile.d/nvm.sh"
+        execute "bash -c 'source /etc/profile.d/nvm.sh'"
         execute "command -v nvm"
 
         execute "nvm install #{nvm_node_version} --default"
