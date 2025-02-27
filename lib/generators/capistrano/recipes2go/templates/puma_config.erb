@@ -8,7 +8,12 @@ pidfile '<%= fetch(:puma_pid_path) %>/puma.pid'
 state_path '<%= fetch(:puma_state) %>'
 stdout_redirect '<%= fetch(:puma_log_path) %>', '<%= fetch(:puma_log_path) %>', true
 
-workers <%= fetch(:puma_workers) %>
+
+## => ! WARNING: Detected running cluster mode with 1 worker.
+## => ! Running Puma in cluster mode with a single worker is often a misconfiguration.
+## => ! Consider running Puma in single-mode (workers = 0) in order to reduce memory overhead.
+## => ! Set the `silence_single_worker_warning` option to silence this warning message.
+workers <%= fetch(:puma_workers) > 1 ? fetch(:puma_workers) : 0 %>
 threads <%= fetch(:puma_min_threads) %>, <%= fetch(:puma_max_threads) %>
 
 preload_app!
@@ -21,3 +26,10 @@ on_restart do
   puts 'Refreshing Gemfile'
   ENV["BUNDLE_GEMFILE"] = "<%= current_path %>/Gemfile"
 end
+
+<% if fetch(:puma_semantic_logger) %>
+on_worker_boot do
+  # ✅ Ensures semantic_logger is restarted for each worker
+  SemanticLogger.reopen
+end
+<% end %>

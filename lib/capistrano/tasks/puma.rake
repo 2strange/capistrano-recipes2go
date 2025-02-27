@@ -28,6 +28,8 @@ namespace :load do
     set :puma_user,               -> { fetch(:user, 'deploy') }  # Standardmäßiger Benutzer
     set :puma_log_lines,          -> { 100 }
 
+    set :puma_semantic_logger,    -> { true }
+
     ## symlink puma config file
     append :linked_files, "config/puma.rb"
 

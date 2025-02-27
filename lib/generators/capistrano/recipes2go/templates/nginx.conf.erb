@@ -12,13 +12,21 @@ upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
 }
 <% else %>
 upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
-  <% fetch(:app_instances).to_i.times do |i| %>
-  server unix:<%= shared_path %>/tmp/sockets/puma.<%= i %>.sock
-         max_fails=1
-         fail_timeout=15s;
+  <% if fetch(:app_instances).to_i > 1 %>
+    <% fetch(:app_instances).to_i.times do |i| %>
+    server unix:<%= shared_path %>/tmp/sockets/puma.<%= i %>.sock
+           max_fails=1
+           fail_timeout=15s;
+    <% end %>
+  <% else %>
+    # Single-mode Puma (workers <= 1), use only one socket
+    server unix:<%= shared_path %>/tmp/sockets/puma.sock
+           max_fails=1
+           fail_timeout=15s;
   <% end %>
 }
 <% end %>
+
 
 <%= render2go("nginx/rails_cache_path") %>
 <%= render2go("nginx/media_cache_path") %>
