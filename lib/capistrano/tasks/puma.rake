@@ -41,6 +41,7 @@ namespace :puma do
     @puma_command = fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command} bundle exec puma" : "/usr/local/bin/bundle exec puma"
 
     template2go("puma_service", "/tmp/puma.service")
+    execute :sudo, "mkdir -p #{fetch(:puma_systemd_path)}"
     execute :sudo, :mv, "/tmp/puma.service", "#{fetch(:puma_systemd_path)}/#{fetch(:puma_service_file)}.service"
     execute :sudo, "systemctl daemon-reload"
   end
@@ -48,6 +49,7 @@ namespace :puma do
   def upload_puma_config
     puts "📤 Uploading Puma configuration..."
     template2go("puma_config", "/tmp/puma.rb")
+    execute :sudo, "mkdir -p #{shared_path}/config"
     execute :sudo, :mv, "/tmp/puma.rb", "#{shared_path}/config/puma.rb"
   end
 

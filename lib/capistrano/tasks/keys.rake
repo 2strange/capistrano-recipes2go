@@ -17,6 +17,7 @@ namespace :keys do
       puts "📤 Syncing: #{file}"
       local_dir = "./config/#{file}"
       remote_dir = "#{host.user}@#{host.hostname}:#{shared_path}/config/#{file}"
+      execute :sudo, "mkdir -p #{shared_path}/config"
       run_locally { execute "rsync -av --delete #{local_dir} #{remote_dir}" }
     end
   end
@@ -58,9 +59,7 @@ namespace :keys do
   end
 end
 
-# desc 'Server setup tasks'
-# task :setup do
-#   invoke 'keys:setup'
-# end
-
-after "deploy:setup", "keys:setup"
+desc 'Server setup tasks'
+task :setup do
+  invoke 'keys:setup'
+end
