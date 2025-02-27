@@ -45,6 +45,7 @@ namespace :puma do
     # Ensure the config and pids folders exist
     ensure_shared_config_path
     ensure_shared_pids_path
+    ensure_shared_sockets_path
 
     execute :sudo, :mv, "/tmp/puma.service", "#{fetch(:puma_systemd_path)}/#{fetch(:puma_service_file)}.service"
     execute :sudo, "systemctl daemon-reload"
@@ -57,6 +58,7 @@ namespace :puma do
     # Ensure the config and pids folders exist
     ensure_shared_config_path
     ensure_shared_pids_path
+    ensure_shared_sockets_path
 
     execute :sudo, :mv, "/tmp/puma.rb", "#{shared_path}/config/puma.rb"
   end
@@ -88,6 +90,7 @@ namespace :puma do
   task :activate do
     on roles fetch(:puma_roles) do
       ensure_shared_pids_path
+      ensure_shared_sockets_path
       invoke "puma:enable"
       invoke "puma:start"
       puts "✅ Puma service activated and running!"
@@ -98,8 +101,12 @@ namespace :puma do
     desc "#{command.capitalize} Puma service"
     task command.gsub(/-/, '_') do
       on roles fetch(:puma_roles) do
-        # Ensure pids directory exists only for start, restart, or enable
-        ensure_shared_pids_path if %w[start restart enable].include?(command)
+        if %w[start restart enable].include?(command)
+          # Ensure pids directory exists only for start, restart, or enable
+          ensure_shared_pids_path 
+          # 🔥 Ensure the socket directory exists!
+          ensure_shared_sockets_path
+        end
 
         execute :sudo, :systemctl, command, fetch(:puma_service_file)
       end

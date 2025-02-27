@@ -11,45 +11,40 @@ module Capistrano
       end
 
 
+      ## PAth helpers
+      def ensure_shared_path(path)
+        unless test("[ -d #{path} ]")
+          puts "📂 Directory #{path} does not exist. Creating it..."
+          execute :mkdir, "-p", path
+        else
+          puts "✅ Directory #{path} already exists."
+        end
+        ensure_shared_path_ownership
+      end
 
       def ensure_shared_config_path
-        # Ensure the config folder exists
-        unless test("[ -d #{shared_path}/config ]")
-          puts "📂 Directory #{shared_path}/config does not exist. Creating it..."
-          execute :mkdir, "-p #{shared_path}/config"
-        else
-          puts "✅ Directory #{shared_path}/config already exists."
-        end
-        # Fix ownership only if needed (avoids unnecessary chown operations)
-        unless test("stat -c '%U:%G' #{shared_path} | grep #{fetch(:user)}:#{fetch(:user)}")
-          puts "🔧 Fixing ownership of #{shared_path} and its config directory..."
-          execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/config"
-          execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}"
-          execute :sudo, :chown, "#{fetch(:user)}:#{fetch(:user)} #{fetch(:deploy_to)}"
-        else
-          puts "✅ Ownership is already correct."
-        end
+        ensure_shared_path("#{shared_path}/config")
       end
-
 
       def ensure_shared_pids_path
-        # Ensure the pids folder exists
-        unless test("[ -d #{shared_path}/pids ]")
-          puts "📂 Directory #{shared_path}/pids does not exist. Creating it..."
-          execute :mkdir, "-p #{shared_path}/pids"
-        else
-          puts "✅ Directory #{shared_path}/pids already exists."
-        end
+        ensure_shared_path("#{shared_path}/pids")
+      end
+
+      def ensure_shared_sockets_path
+        ensure_shared_path("#{shared_path}/tmp/sockets")
+      end
+
+      def ensure_shared_path_ownership
         # Fix ownership only if needed (avoids unnecessary chown operations)
         unless test("stat -c '%U:%G' #{shared_path} | grep #{fetch(:user)}:#{fetch(:user)}")
-          puts "🔧 Fixing ownership of #{shared_path} and its pids directory..."
-          execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/pids"
+          puts "🔧 Fixing ownership of #{shared_path} and its parent directories..."
           execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}"
           execute :sudo, :chown, "#{fetch(:user)}:#{fetch(:user)} #{fetch(:deploy_to)}"
         else
           puts "✅ Ownership is already correct."
         end
       end
+
 
 
       def template2go(from, to)
