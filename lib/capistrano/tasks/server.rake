@@ -7,7 +7,7 @@ namespace :load do
     set :srvr_create_user,          -> { false }
 
     # Ruby version and RVM installation
-    set :srvr_install_nvm,          -> { true }
+    set :srvr_install_rvm,          -> { true }
     set :srvr_rvm_ruby_version,     -> { fetch(:rvm_ruby_version, "3.3.5") }
 
     # Node.js version and NVM installation
@@ -179,6 +179,9 @@ namespace :server do
           execute :sudo, "apt install -y ufw"
         end
         puts "🛡️ Configuring UFW firewall..."
+        execute :sudo, "ufw --force reset"
+        execute :sudo, "ufw default deny incoming"
+        execute :sudo, "ufw default allow outgoing"
         execute :sudo, "ufw allow OpenSSH"
         # execute :sudo, "ufw allow 'Nginx Full'" if install_nginx
         execute :sudo, "ufw allow 80"   # HTTP
