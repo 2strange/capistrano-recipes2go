@@ -6,7 +6,7 @@ namespace :load do
 
     append :linked_files, 'config/master.key', 'config/credentials.yml.enc'
     append :linked_files, 'config/configuration.yml' if fetch(:keys_use_configuration, false)
-    
+
   end
 end
 
@@ -58,7 +58,9 @@ namespace :keys do
   end
 end
 
-desc 'Server setup tasks'
-task :setup do
-  invoke 'keys:setup'
-end
+# desc 'Server setup tasks'
+# task :setup do
+#   invoke 'keys:setup'
+# end
+
+after "setup", "keys:setup"
