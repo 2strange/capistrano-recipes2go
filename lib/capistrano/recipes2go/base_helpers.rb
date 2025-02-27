@@ -13,8 +13,15 @@ module Capistrano
 
       def ensure_shared_config_path
         # Ensure the config folder exists
-        execute :mkdir, "-p #{shared_path}/config"
-        execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/config"
+        unless test("[ -d #{shared_path}/config ]")
+          puts "📂 Directory #{shared_path}/config does not exist. Creating it..."
+          execute :mkdir, "-p #{shared_path}/config"
+          execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/config"
+          execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}"
+          execute :sudo, :chown, "#{fetch(:user)}:#{fetch(:user)} #{fetch(:deploy_to)}"
+        else
+          puts "✅ Directory #{shared_path}/config already exists."
+        end
       end
 
 
