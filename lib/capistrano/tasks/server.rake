@@ -71,7 +71,7 @@ namespace :server do
       if install_postgres
         puts "🐘 Installing PostgreSQL..."
         execute :sudo, "apt install -y postgresql-common"
-        execute :sudo, "/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh"
+        execute :sudo, "echo | /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh"
         execute :sudo, "apt install -y postgresql libpq-dev"
         execute :sudo, "systemctl enable --now postgresql"
       end
