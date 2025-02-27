@@ -3,7 +3,12 @@
 directory '<%= current_path %>'
 environment '<%= fetch(:stage) %>'
 
-bind 'unix://<%= fetch(:puma_socket) %>'
+# Fix the socket name
+<% if fetch(:puma_workers).to_i > 1 %>
+  bind 'unix://<%= fetch(:puma_socket_path) %>/puma.0.sock'
+<% else %>
+  bind 'unix://<%= fetch(:puma_socket_path) %>/puma.sock'
+<% end %>
 pidfile '<%= fetch(:puma_pid_path) %>/puma.pid'
 state_path '<%= fetch(:puma_state) %>'
 stdout_redirect '<%= fetch(:puma_log_path) %>', '<%= fetch(:puma_log_path) %>', true

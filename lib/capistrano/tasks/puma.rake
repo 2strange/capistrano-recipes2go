@@ -7,7 +7,7 @@ namespace :load do
     set :puma_service_file,       -> { "puma_#{fetch(:application)}_#{fetch(:stage)}" }
     set :puma_systemd_path,       -> { "/etc/systemd/system" }
     set :puma_pid_path,           -> { "#{shared_path}/pids" }
-    set :puma_socket,             -> { "#{shared_path}/tmp/sockets/puma.sock" }
+    set :puma_socket_path,        -> { "#{shared_path}/tmp/sockets" }
     set :puma_state,              -> { "#{shared_path}/puma.state" }
     set :puma_log_path,           -> { "#{shared_path}/log/puma.log" }
 
