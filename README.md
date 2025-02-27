@@ -45,6 +45,12 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
 ```
 
+## 📜 Documentation
+
+- [Server Setup](docs/server.md) - Setup a new server with Capistrano
+
+
+
 
 ## Contributing
 Contribution directions go here.
