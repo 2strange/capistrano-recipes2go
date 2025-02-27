@@ -13,7 +13,7 @@ threads <%= fetch(:puma_min_threads) %>, <%= fetch(:puma_max_threads) %>
 
 preload_app!
 
-daemonize false
+# daemonize false .. Puma deprecated and removed daemonize mode in version 6
 
 activate_control_app 'unix://<%= fetch(:puma_socket) %>.ctl'
 
