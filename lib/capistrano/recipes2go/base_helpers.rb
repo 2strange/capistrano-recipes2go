@@ -16,11 +16,17 @@ module Capistrano
         unless test("[ -d #{shared_path}/config ]")
           puts "📂 Directory #{shared_path}/config does not exist. Creating it..."
           execute :mkdir, "-p #{shared_path}/config"
+        else
+          puts "✅ Directory #{shared_path}/config already exists."
+        end
+        # Fix ownership only if needed (avoids unnecessary chown operations)
+        unless test("stat -c '%U:%G' #{shared_path} | grep #{fetch(:user)}:#{fetch(:user)}")
+          puts "🔧 Fixing ownership of #{shared_path} and its config directory..."
           execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/config"
           execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}"
           execute :sudo, :chown, "#{fetch(:user)}:#{fetch(:user)} #{fetch(:deploy_to)}"
         else
-          puts "✅ Directory #{shared_path}/config already exists."
+          puts "✅ Ownership is already correct."
         end
       end
 
