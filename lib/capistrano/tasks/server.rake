@@ -12,14 +12,16 @@ namespace :load do
 
     # Node.js version and NVM installation
     set :srvr_install_nvm,          -> { true }
-    set :srvr_nvm_node_version,     -> { "23" }
+    set :srvr_nvm_version,          -> { fetch(:nvm_version, 'v0.39.7') }
+    set :srvr_nvm_node_version,     -> { fetch(:nvm_node_version, "23") }
 
     # Install core services
     set :srvr_install_nginx,        -> { true }
     set :srvr_install_postgres,     -> { true }
     set :srvr_install_certbot,      -> { true }
     set :srvr_install_redis,        -> { true }
-    set :srvr_install_thin,         -> { true }
+
+    set :srvr_install_thin,         -> { false }    # activate if you want to use Thin
 
     # Enable firewall and allow additional ports
     set :srvr_enable_firewall,      -> { true }
@@ -35,9 +37,7 @@ namespace :server do
       create_user = fetch(:srvr_create_user)
 
       install_rvm = fetch(:srvr_install_rvm)
-      rvm_ruby_version = fetch(:srvr_rvm_ruby_version)
       install_nvm = fetch(:srvr_install_nvm)
-      nvm_node_version = fetch(:srvr_nvm_node_version)
 
       install_nginx = fetch(:srvr_install_nginx)
       install_postgres = fetch(:srvr_install_postgres)
@@ -116,27 +116,52 @@ namespace :server do
 
       # Install RVM and the specified Ruby version
       if install_rvm
-        puts "💎 Installing RVM & Ruby #{rvm_ruby_version}..."
+        puts "💎 Installing RVM & Ruby #{fetch(:srvr_rvm_ruby_version)}..."
         execute :sudo, "gpg --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB"
         execute :sudo, "curl -sSL https://get.rvm.io | bash -s master"
         execute "source /home/#{user}/.rvm/scripts/rvm"
-        execute "rvm install #{rvm_ruby_version} --default"
+        execute "rvm install #{fetch(:srvr_rvm_ruby_version)} --default"
       end
 
       # Install NVM and Node.js
       if install_nvm
-        puts "⚙️ Installing NVM & Node.js #{nvm_node_version}..."
-        execute "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"
-        # execute "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
+        # Check if NVM is already installed
+        unless test("[ -d \"$HOME/.nvm\" ]")
+          puts "⚙️ Installing NVM & Node.js #{fetch(:srvr_nvm_node_version)}..."
 
-        # Write NVM to /etc/profile.d/ (fixing permission issue)
-        execute "echo 'export NVM_DIR=\"$HOME/.nvm\"' >> ~/.profile"
-        execute "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"' >> ~/.profile"
-        execute "echo '[ -s \"$NVM_DIR/bash_completion\" ] && . \"$NVM_DIR/bash_completion\"' >> ~/.profile"
-        execute "bash -c 'source ~/.profile'"
-        execute "command -v nvm"
+          # Backup original .bashrc
+          execute :cp, "$HOME/.bashrc", "$HOME/bashrc_backup"
 
-        execute "nvm install #{nvm_node_version} --default"
+          # Install NVM
+          execute "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/#{fetch(:srvr_nvm_version)}/install.sh | bash"
+
+          # Create new .bashrc with NVM at the top
+          execute "echo '# Load NVM script at the top, so it is available in non-interactiv sessions' > $HOME/bashrc_new"
+          execute "echo 'export NVM_DIR=\"$HOME/.nvm\"' >> $HOME/bashrc_new"
+          execute "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"' >> $HOME/bashrc_new"
+          execute "echo '[ -s \"$NVM_DIR/bash_completion\" ] && . \"$NVM_DIR/bash_completion\"' >> $HOME/bashrc_new"
+          execute "echo ' ' >> $HOME/bashrc_new"
+
+          # Append the rest of the original .bashrc
+          execute "cat $HOME/bashrc_backup >> $HOME/bashrc_new"
+
+          # Replace .bashrc with the new version
+          execute :mv, "$HOME/bashrc_new", "$HOME/.bashrc"
+
+          # Clean up backup
+          execute "rm -f $HOME/bashrc_backup"
+
+          # Reload bashrc
+          execute "bash -c 'source $HOME/.bashrc'"
+
+          # Test if nvm is available
+          execute "command -v nvm"
+
+          # Install the desired Node.js version
+          execute "nvm install #{fetch(:srvr_nvm_node_version)} --default"
+        else
+          puts "✅ NVM is already installed. Skipping installation."
+        end
       end
 
       # Install Certbot for Let's Encrypt
