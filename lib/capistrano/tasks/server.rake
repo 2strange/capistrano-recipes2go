@@ -97,11 +97,20 @@ namespace :server do
         thin_version = capture("thin -v").strip
         puts "✅ Thin Version: #{thin_version}"
 
-        # Create a symlink to /etc/thin if necessary
-        thin_path = capture("ls -d /etc/thin* 2>/dev/null || echo ''").strip
-        if !thin_path.empty? && thin_path != "/etc/thin"
-          execute :sudo, "ln -sfn #{thin_path} /etc/thin"
-          puts "🔗 Symlink created: /etc/thin → #{thin_path}"
+        # Check if /etc/thin exists
+        if test("[ -d /etc/thin ]")
+          puts "✅ /etc/thin already exists, skipping symlink creation."
+        else
+          # Try to find a valid Thin config directory
+          thin_path = capture("ls -d /etc/thin* 2>/dev/null || echo ''").strip
+
+          # Ensure a valid path was found before proceeding
+          if !thin_path.empty? && thin_path != "/etc/thin"
+            puts "🔗 Creating symlink: /etc/thin → #{thin_path}"
+            execute :sudo, "ln -sfn #{thin_path} /etc/thin"
+          else
+            puts "⚠️ No alternative Thin config directory found, skipping symlink."
+          end
         end
       end
 
