@@ -129,7 +129,8 @@ namespace :server do
         execute "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"
         # execute "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
         # Ensure NVM is loaded at the top of ~/.bashrc
-        execute %q(
+       execute %q(
+          export BASH_ENV="$HOME/.bashrc"; 
           if ! grep -q 'export NVM_DIR' ~/.bashrc; then
             printf 'export NVM_DIR="$HOME/.nvm"\n[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"\n[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"\n' | cat - ~/.bashrc > /tmp/bashrc && mv /tmp/bashrc ~/.bashrc
           fi
