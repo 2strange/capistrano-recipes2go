@@ -128,13 +128,12 @@ namespace :server do
         puts "⚙️ Installing NVM & Node.js #{nvm_node_version}..."
         execute "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"
         # execute "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
-        # Ensure NVM is loaded at the top of ~/.bashrc
-       execute %q(
-          export BASH_ENV="$HOME/.bashrc"; 
-          if ! grep -q 'export NVM_DIR' ~/.bashrc; then
-            printf 'export NVM_DIR="$HOME/.nvm"\n[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"\n[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"\n' | cat - ~/.bashrc > /tmp/bashrc && mv /tmp/bashrc ~/.bashrc
-          fi
-        )
+        
+        # Add NVM to /etc/profile.d/
+        execute :sudo, %Q(echo 'export NVM_DIR="$HOME/.nvm"\n[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"\n[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' | tee /etc/profile.d/nvm.sh > /dev/null)
+        # Ensure correct permissions
+        execute :sudo, "chmod +x /etc/profile.d/nvm.sh"
+
         execute "nvm install #{nvm_node_version} --default"
       end
 
