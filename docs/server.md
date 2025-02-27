@@ -114,31 +114,6 @@ If `~/.ssh/id_rsa.pub` doesn't exist:
 
 ---
 
-## 🛠️ Troubleshooting
-
-### ❌ `nvm: command not found`
-- Ensure NVM is installed and sourced at the **top** of `.bashrc`
-- Run:
-  ```sh
-  source ~/.bashrc
-  nvm --version
-  ```
-
-### ❌ `Permission denied` for `/etc/profile.d/nvm.sh`
-- Ensure your user has **sudo** access
-- Manually install NVM:
-  ```sh
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-  ```
-
-### ❌ `Thin config directory issue`
-- If Thin’s config is missing:
-  ```sh
-  ls -d /etc/thin*
-  ```
-
----
-
 ## 🔗 Useful Resources
 
 - [Capistrano Docs](https://capistranorb.com/documentation/getting-started/)
@@ -150,7 +125,3 @@ If `~/.ssh/id_rsa.pub` doesn't exist:
 
 ### ✅ **Done!** 🎉  
 Your server is now fully configured and ready to deploy 🚀
-
----
-
-Let me know if you want any changes! 😊

@@ -85,9 +85,22 @@ namespace :puma do
 
   %w[start stop restart enable disable is-enabled].each do |command|
     desc "#{command.capitalize} Puma service"
-    task command do
+    task command.gsub(/-/, '_') do
       on roles fetch(:puma_roles) do
         execute :sudo, :systemctl, command, fetch(:puma_service_file)
+      end
+    end
+  end
+
+  desc "Enable Puma service if it's not already enabled"
+  task :enable_if_needed do
+    on roles(:app) do
+      # Check if the service is already enabled
+      if test("systemctl is-enabled #{fetch(:puma_service_file)} || echo disabled") == "disabled"
+        info "🔧 Enabling #{fetch(:puma_service_file)} service..."
+        execute :sudo, "systemctl enable --now #{fetch(:puma_service_file)}"
+      else
+        info "✅ #{fetch(:puma_service_file)} is already enabled, skipping."
       end
     end
   end
@@ -111,6 +124,7 @@ namespace :deploy do
   after 'deploy:published', :restart_puma do
     if fetch(:puma_hooks)
       invoke "puma:upload_config"
+      invoke "puma:enable_if_needed"
       invoke "puma:restart"
     end
   end
