@@ -9,7 +9,14 @@ module Capistrano
         ## Systemd requires absolute paths for RVM execution
         "/home/#{ fetch(:thin_daemon_user) }/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
       end
-      
+
+
+      def ensure_shared_config_path
+        # Ensure the config folder exists
+        execute :mkdir, "-p #{shared_path}/config"
+        execute :sudo, :chown, "-R #{fetch(:user)}:#{fetch(:user)} #{shared_path}/config"
+      end
+
 
       def template2go(from, to)
         erb = get_template_file(from)

@@ -1,3 +1,6 @@
+require 'capistrano/recipes2go/base_helpers'
+include Capistrano::Recipes2go::BaseHelpers
+
 namespace :load do
   task :defaults do
 
@@ -17,7 +20,10 @@ namespace :keys do
       puts "📤 Syncing: #{file}"
       local_dir = "./config/#{file}"
       remote_dir = "#{host.user}@#{host.hostname}:#{shared_path}/config/#{file}"
-      execute :sudo, "mkdir -p #{shared_path}/config"
+      
+      # Ensure the config folder exists
+      ensure_shared_config_path()
+      
       run_locally { execute "rsync -av --delete #{local_dir} #{remote_dir}" }
     end
   end
