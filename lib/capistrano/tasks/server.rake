@@ -130,12 +130,9 @@ namespace :server do
         # execute "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
 
         # Write NVM to /etc/profile.d/ (fixing permission issue)
-        execute %Q{
-          echo 'export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-          [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' >> ~/.profile
-        }
-
+        execute "echo 'export NVM_DIR=\"$HOME/.nvm\"' >> ~/.profile"
+        execute "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"' >> ~/.profile"
+        execute "echo '[ -s \"$NVM_DIR/bash_completion\" ] && . \"$NVM_DIR/bash_completion\"' >> ~/.profile"
         execute "bash -c 'source ~/.profile'"
         execute "command -v nvm"
 
