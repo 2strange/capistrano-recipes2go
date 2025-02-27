@@ -8,10 +8,17 @@ namespace :load do
     set :keys_use_configuration, -> { false }
 
     append :linked_files, 'config/master.key', 'config/credentials.yml.enc'
-    append :linked_files, 'config/configuration.yml' if fetch(:keys_use_configuration, false)
+    # append :linked_files, 'config/configuration.yml' if fetch(:keys_use_configuration, false)
 
   end
 end
+
+Rake::Task['deploy:starting'].enhance do
+  if fetch(:keys_use_configuration)
+    append :linked_files, 'config/configuration.yml'
+  end
+end
+
 
 namespace :keys do
 
