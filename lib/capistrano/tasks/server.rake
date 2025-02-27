@@ -175,7 +175,8 @@ namespace :server do
       if enable_firewall
         if test("[ -z \"$(command -v ufw)\" ]")
           puts "🔄 Installing UFW..."
-          execute :sudo, "apt update && apt install -y ufw"
+          execute :sudo, "apt update"
+          execute :sudo, "apt install -y ufw"
         end
         puts "🛡️ Configuring UFW firewall..."
         execute :sudo, "ufw allow OpenSSH"

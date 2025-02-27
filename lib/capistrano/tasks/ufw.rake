@@ -13,7 +13,8 @@ namespace :ufw do
     on roles(:web) do
       if test("[ -z \"$(command -v ufw)\" ]")
         puts "🔄 Installing UFW..."
-        execute :sudo, "apt update && apt install -y ufw"
+        execute :sudo, "apt update"
+        execute :sudo, "apt install -y ufw"
       else
         puts "✅ UFW is already installed."
       end
