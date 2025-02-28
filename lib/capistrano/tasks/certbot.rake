@@ -9,7 +9,6 @@ namespace :load do
     set :certbot_email,         -> { "" }
     # set :certbot_dh_path,       -> { fetch(:nginx_diffie_hellman_path, "/etc/ssl/certs/dhparam.pem")}
     # set :certbot_dh_size,       -> { 4096 }
-    set :certbot_snap,          -> { false }
   end
 end
 
@@ -19,18 +18,8 @@ namespace :certbot do
   task :install do
     on release_roles fetch(:certbot_roles) do
       within fetch(:certbot_path) do
-        if fetch(:certbot_snap, false)
-          execute :sudo, "apt update"
-          execute :sudo, "apt install -y snapd"
-          execute :sudo, "snap install core"
-          execute :sudo, "snap refresh core"
-          execute :sudo, "snap install --classic certbot"
-          execute :sudo, "ln -s /snap/bin/certbot /usr/bin/certbot"
-          execute :sudo, "snap set certbot trust-plugin-with-root=ok"
-        else
-          execute :sudo, "apt update"
-          execute :sudo, "apt install -y certbot"
-        end
+        execute :sudo, "apt update"
+        execute :sudo, "apt install -y certbot"
       end
     end
   end
