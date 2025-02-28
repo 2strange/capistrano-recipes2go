@@ -1,0 +1,26 @@
+
+  root <%= fetch(:nginx_static_dir) %>;
+
+
+  access_log <%= fetch(:nginx_log_path) %>/nginx-access.log;
+  error_log  <%= fetch(:nginx_log_path) %>/nginx-error.log;
+
+
+  error_page 404 /404.html;
+  location /404.html { root <%= fetch(:nginx_static_dir) %>; }
+
+  error_page 500 502 503 504 /500.html;
+  location /500.html { root <%= fetch(:nginx_static_dir) %>; }
+
+  client_max_body_size  4G;
+  keepalive_timeout     10;
+
+  location ^~ /assets/ {
+    gzip_static on;
+    expires max;
+    add_header Cache-Control public;
+  }
+
+  <% if fetch(:allow_well_known) %>
+  location ~ /.well-known { allow all; }
+  <% end %>

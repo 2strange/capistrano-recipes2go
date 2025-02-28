@@ -7,35 +7,36 @@ namespace :load do
   task :defaults do
     set :nginx_domains,           -> { [] }
     set :nginx_major_domain,      -> { false }
-    set :nginx_domain_wildcard,   -> { false }
-    set :nginx_redirect_subdomains, -> { false }
     set :nginx_remove_www,        -> { true }
-    set :default_site,            -> { false }
+    set :nginx_use_ssl,           -> { false }
 
 
     ## Rails Application Server
-    set :app_instances,             -> { 1 }
-    set :rails_application_server,  -> { :puma }  # Default to Puma, can be :thin
+    set :app_instances,           -> { 1 }
+    set :rails_app_server,        -> { :puma }  # Default to Puma, can be :thin
 
 
     set :nginx_roles,             -> { :web }
     set :nginx_log_path,          -> { "#{shared_path}/log" }
-    set :nginx_root_path,         -> { "/etc/nginx" }
-    set :nginx_static_dir,        -> { "public" }
+    set :nginx_static_dir,        -> { "#{current_path}/public" }
     set :nginx_template,          -> { :default }
-    set :nginx_use_ssl,           -> { false }
 
     # Define Nginx Site Name
-    set :nginx_site_name,        -> { "#{fetch(:application)}_#{fetch(:stage)}" }
+    set :nginx_site_name,         -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 
     # SSL Paths
-    set :nginx_ssl_cert,  -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
-    set :nginx_ssl_key,   -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
+    set :nginx_ssl_cert,          -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
+    set :nginx_ssl_key,           -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
 
-    set :app_server_ip,   -> { "127.0.0.1" }
-    set :nginx_hooks,     -> { true }
-    set :allow_well_known, -> { true }
-    set :nginx_strict_security, -> { fetch(:nginx_use_ssl, false) }
+    # SSL Paths for old domain certificates, if major domain is set
+    set :nginx_other_ssl_cert,    -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
+    set :nginx_other_ssl_key,     -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
+
+    set :nginx_hooks,             -> { true }
+    set :allow_well_known,        -> { true }
+    
+    # SSL strict security settings
+    set :nginx_strict_security,   -> { fetch(:nginx_use_ssl, false) }
 
     # SSL Cipher Suite
     set :nginx_ssl_ciphers, -> { 
@@ -44,6 +45,30 @@ namespace :load do
       "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:" \
       "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305"
     }
+
+
+    ## NginX Proxy-Caching
+    # Cache Rails
+    set :proxy_cache_rails,           -> { false }
+    set :proxy_cache_rails_directory, -> { "#{shared_path}/tmp/proxy_cache/rails" }
+    set :proxy_cache_rails_levels,    -> { "1:2" }
+    set :proxy_cache_rails_name,      -> { "RAILS_#{fetch(:application)}_#{fetch(:stage)}_CACHE" }
+    set :proxy_cache_rails_size,      -> { "4m" }
+    set :proxy_cache_rails_time,      -> { "24h" }
+    set :proxy_cache_rails_max,       -> { "1g" }
+    set :proxy_cache_rails_200,       -> { false }
+    set :proxy_cache_rails_404,       -> { "60m" }
+    set :proxy_cache_rails_stale,     -> { ["error", "timeout", "invalid_header", "updating"] }
+    # Cache Media (Dragonfly)
+    set :proxy_cache_media,           -> { false }
+    set :proxy_cache_media_path,      -> { "media" }
+    set :proxy_cache_media_directory, -> { "#{shared_path}/tmp/proxy_cache/media" }
+    set :proxy_cache_media_levels,    -> { "1:2" }
+    set :proxy_cache_media_name,      -> { "MEDIA_#{fetch(:application)}_#{fetch(:stage)}_CACHE" }
+    set :proxy_cache_media_size,      -> { "2m" }
+    set :proxy_cache_media_time,      -> { "48h" }
+    set :proxy_cache_media_max,       -> { "1g" }
+
   end
 end
 
@@ -113,23 +138,6 @@ namespace :nginx do
       end
     end
 
-    desc "Reconfigure Nginx (Upload, Enable if needed, Restart)"
-    task :reconfigure do
-      on release_roles fetch(:nginx_roles) do
-        puts "🔄 Reconfiguring Nginx..."
-        invoke "nginx:site:upload"
-        
-        unless test "[ -h /etc/nginx/sites-enabled/#{fetch(:nginx_site_name)} ]"
-          invoke "nginx:site:enable"
-        else
-          puts "🔗 Site already enabled, skipping enable step!"
-        end
-        
-        invoke "nginx:service:restart"
-        puts "✅ Nginx reconfiguration complete!"
-      end
-    end
-
 
     ## Initiate Task, no desc .. so not in cap -T list
     task :prepare do
@@ -144,6 +152,7 @@ namespace :nginx do
   end
 
   namespace :service do
+
     %w[start stop restart reload].each do |command|
       desc "#{command.capitalize} nginx service"
       task command do
@@ -169,7 +178,27 @@ namespace :nginx do
         execute :sudo, "systemctl status nginx --no-pager"
       end
     end
+
   end
+  
+
+  desc "Update Apps Nginx (Upload, Enable if needed, Restart)"
+  task :update do
+    on release_roles fetch(:nginx_roles) do
+      puts "🔄 Reconfiguring Nginx..."
+      invoke "nginx:site:upload"
+      
+      unless test "[ -h /etc/nginx/sites-enabled/#{fetch(:nginx_site_name)} ]"
+        invoke "nginx:site:enable"
+      else
+        puts "🔗 Site already enabled, skipping enable step!"
+      end
+      
+      invoke "nginx:service:restart"
+      puts "✅ Nginx reconfiguration complete!"
+    end
+  end
+  
 end
 
 
@@ -184,7 +213,7 @@ end
 namespace :deploy do
   after 'deploy:finishing', :restart_nginx_app do
     if fetch(:nginx_hooks)
-      invoke "nginx:site:reconfigure"
+      invoke "nginx:update"
     end
   end
 end

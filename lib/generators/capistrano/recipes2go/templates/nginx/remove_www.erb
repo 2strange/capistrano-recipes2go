@@ -1,5 +1,0 @@
-<% if fetch(:nginx_remove_www) %>
-  if ($host ~* ^www\.(?<domain>.*)) {
-    return 301 <%= fetch(:nginx_use_ssl) ? "https" : "http" %>://$domain$request_uri;
-  }
-<% end %>

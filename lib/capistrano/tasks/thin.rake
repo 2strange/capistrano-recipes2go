@@ -13,6 +13,8 @@ namespace :load do
     set :thin_require,                -> { [] }
     set :thin_wait,                   -> { 90 }
     set :thin_onebyone,               -> { true }
+
+    set :thin_servers,                -> { fetch(:app_instances, 1) }
     
     set :thin_daemonize,              -> { false } # Thin should not daemonize itself
     set :thin_hooks,                  -> { true }  # Enables automatic setup/restart

@@ -1,0 +1,26 @@
+
+  ## Modern TLS Security
+  ssl_protocols       TLSv1.2 TLSv1.3;
+  ssl_ciphers         <%= fetch(:nginx_ssl_ciphers) %>;
+  ssl_prefer_server_ciphers on;
+  ssl_ecdh_curve      X25519:secp384r1;
+
+  ssl_session_cache   shared:SSL:50m;
+  ssl_session_tickets off;
+
+  ## OCSP Stapling for Faster SSL Handshakes
+  ssl_stapling        on;
+  ssl_stapling_verify on;
+  resolver            8.8.8.8 8.8.4.4 valid=300s;
+  resolver_timeout    5s;
+
+  ## Security Headers
+  add_header X-Frame-Options DENY;
+  add_header X-Content-Type-Options nosniff;
+  add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+  ## Enable HTTP Strict Transport Security (HSTS)
+  <% if fetch(:nginx_strict_security) %>
+  add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+  <% end %>
+  

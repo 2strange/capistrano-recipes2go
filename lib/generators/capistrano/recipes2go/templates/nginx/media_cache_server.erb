@@ -7,6 +7,6 @@
     proxy_cache_use_stale error timeout updating;
     proxy_ignore_headers  Set-Cookie;
     proxy_cache_bypass    $http_bypass_proxy;
-    proxy_pass            $scheme://thin_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
+    proxy_pass            $scheme://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
   }
 <% end %>

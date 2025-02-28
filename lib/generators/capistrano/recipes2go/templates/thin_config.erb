@@ -12,7 +12,7 @@ max_conns: <%= fetch(:thin_max_conns) %>
 max_persistent_conns: <%= fetch(:thin_max_persistent_conns) %>
 require: <%= fetch(:thin_require) %>
 wait: <%= fetch(:thin_wait) %>
-servers: <%= fetch(:app_instances) %>
+servers: <%= fetch(:thin_servers) %>
 # user: <%= fetch(:user) %>
 socket: /tmp/thin.<%= fetch(:application) %>.<%= fetch(:stage) %>.sock
 daemonize: <%= fetch(:thin_daemonize) %>
