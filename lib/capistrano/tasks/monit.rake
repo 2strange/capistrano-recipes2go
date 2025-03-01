@@ -185,7 +185,15 @@ namespace :certbot do
   desc "Generate MONIT-WebClient LetsEncrypt certificate"
   task :monit_cert do
     on release_roles fetch(:certbot_roles) do
-      execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }"
+      certbot_email = fetch(:certbot_email, "").strip
+      if certbot_email.empty?
+        puts "⚠️  No email address is set for Let's Encrypt!"
+        puts "➡️  A valid email is required to receive expiration notifications."
+        puts "➡️  Please enter a valid email address:"
+        ask(:certbot_email, "Enter email for Let's Encrypt:")
+        set(:certbot_email, fetch(:certbot_email)) # Store response
+      end
+      execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:certbot_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }"
     end
   end
 end
