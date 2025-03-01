@@ -110,7 +110,7 @@ namespace :monit do
     end
     # Monit-Configurationsdateien für Prozesse hochladen
     monit_processes.each do |process|
-      invoke "monit:#{process}:configure"
+      invoke "monit:task:#{process}:configure"
     end
     # Monit Webclient aktivieren
     if !!fetch(:monit_webclient, false)
