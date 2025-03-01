@@ -24,10 +24,10 @@ module Capistrano
       # All processes
       def monit_processes
         processes = []
-        processes + Array(fetch(:monit_system_processes, []))
-        processes + Array(fetch(:monit_app_processes, []))
-        processes << "websites" if Array(fetch(:monit_websites_to_check, [])).any?
-        processes << "files" if Array(fetch(:monit_files_to_check, [])).any?
+        processes += Array(fetch(:monit_system_processes, []))
+        processes += Array(fetch(:monit_app_processes, []))
+        processes << "websites"   if Array(fetch(:monit_websites_to_check, [])).any? && !processes.include?("websites")
+        processes << "files"      if Array(fetch(:monit_files_to_check, [])).any? && !processes.include?("files")
         processes
       end
 
