@@ -118,31 +118,6 @@ namespace :monit do
     invoke "monit:reload"
   end
 
-  # namespace :process do
-    monit_processes.each do |process|
-      namespace process.to_sym do
-
-        %w[monitor unmonitor start stop restart].each do |command|
-          desc "#{command.capitalize} #{process} process"
-          task command do
-            on roles fetch(:monit_roles) do
-              monit_process_command(process, command)
-            end
-          end
-        end
-
-        ## Server specific tasks (gets overwritten by other environments!)
-        desc "Upload Monit #{process} config file (server specific)"
-        task :configure do
-          on roles fetch(:monit_roles) do
-            monit_config( process )
-          end
-        end
-
-      end
-    end
-  # end
-
   desc "Restart all monitored processes"
   task :restart do
     on roles fetch(:monit_roles) do
@@ -158,7 +133,8 @@ end
 # Diesen Block erst ausführen, sobald load:defaults abgeschlossen ist
 Rake::Task["load:defaults"].enhance do
   namespace :monit do
-    namespace :process do
+
+    namespace :task do
       # Jetzt wird monit_processes mit den gesetzten Defaults ausgewertet
       monit_processes.each do |process|
         namespace process.to_sym do
@@ -183,5 +159,19 @@ Rake::Task["load:defaults"].enhance do
         end
       end
     end
+
+    namespace :all do
+      %w[monitor unmonitor start stop restart].each do |command|
+        desc "#{command.capitalize} all processes"
+        task command do
+          on roles fetch(:monit_roles) do
+            monit_processes.each do |process|
+              monit_process_command(process, command)
+            end
+          end
+        end
+      end
+    end
+
   end
 end
