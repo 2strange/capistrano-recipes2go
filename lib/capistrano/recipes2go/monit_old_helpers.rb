@@ -89,6 +89,35 @@ module Capistrano
 
 
 
+      ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+
+      def monit_config(name, destination = nil, role = nil)
+        @role = role
+        destination ||= "/etc/monit/conf.d/#{name}.conf"
+        template_with_role "monit/#{name}", "/tmp/monit_#{name}", @role
+        
+        # Check if file has changed
+        remote_checksum = capture(:md5sum, destination).split.first rescue nil
+        local_checksum = capture(:md5sum, "/tmp/monit_#{name}").split.first
+        
+        if remote_checksum != local_checksum
+          execute :sudo, "mv /tmp/monit_#{name} #{destination}"
+          execute :sudo, "chown root #{destination}"
+          execute :sudo, "chmod 600 #{destination}"
+        else
+          info "⚡ Monit config for #{name} is up-to-date, skipping upload."
+          execute :sudo, "rm -f /tmp/monit_#{name}"
+        end
+      end
+
+
+
+
+      ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
 
 
       def ensure_monit_installed
@@ -97,7 +126,11 @@ module Capistrano
       end
 
       def detect_monit_processes
-        processes = %w[nginx postgresql redis]
+        # processes = %w[nginx postgresql redis]
+        processes = []
+        processes << "nginx" if test("which nginx")
+        processes << "postgresql" if test("which psql")
+        processes << "redis" if test("which redis-server")
         processes << 'sidekiq' if fetch(:sidekiq_enabled, false)
         processes << 'puma' if fetch(:puma_enabled, false)
         processes

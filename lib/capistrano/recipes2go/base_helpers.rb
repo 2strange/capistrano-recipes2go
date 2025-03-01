@@ -48,6 +48,7 @@ module Capistrano
 
 
       def template2go(from, to, role = nil)
+        @role = role  ## Set role for template (used in monit)
         erb = get_template_file(from)
         upload! StringIO.new( ERB.new(erb).result(binding) ), to
       end

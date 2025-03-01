@@ -6,7 +6,6 @@ include Capistrano::Recipes2go::MonitHelpers
 include Capistrano::Recipes2go::SidekiqHelpers
 
 
-
 namespace :load do
   task :defaults do
 
@@ -22,10 +21,10 @@ namespace :load do
     set :monit_active,                -> { true }
     set :monit_main_rc,               -> { true }
 
-    # Definierte Prozesse. 
-    # Hinweis: Der alte Namespace "sidekiq" entfällt – es wird nur noch sidekiq_six genutzt, 
-    # der nun in "sidekiq" umbenannt wurde. PM2 wurde entfernt (ist fürs Frontend gedacht).
-    set :monit_processes,             -> { %w[nginx postgresql thin website sidekiq redis pwa] }
+    # Definierte Prozesse. Diese werden in den Monit-Configurationsdateien genutzt
+    # set :monit_processes,             -> { %w[nginx postgresql thin website sidekiq redis pwa] }
+    set :monit_system_processes,      -> { [nginx postgresql redis] }  # or: detect_monit_system_processes() = auto-detect [nginx, postgresql, redis]
+    set :monit_app_processes,         -> { [puma] }  # puma, thin, sidekiq, etc.
 
     # Hauptname in den RC-Dateien (wird im Cockpit verwendet, wenn mehrere Monit-Instanzen vorliegen)
     set :monit_name,                  -> { "#{ fetch(:application) }_#{ fetch(:stage) }" }
@@ -62,24 +61,95 @@ namespace :load do
     set :monit_http_password,         -> { "monitor" }
     set :monit_webclient,             -> { false }  # Aktiviert nginx-Config für den Monit WebClient
     set :monit_webclient_domain,      -> { false }  # Domain für den Webclient
-    set :monit_webclient_use_ssl,     -> { false }
-    set :monit_webclient_ssl_cert,    -> { false }
-    set :monit_webclient_ssl_key,     -> { false }
+    set :monit_webclient_use_ssl,     -> { false }  # Nutzt SSL für den WebClient
+    set :monit_webclient_ssl_cert,    -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient_domain)}/fullchain.pem" }
+    set :monit_webclient_ssl_key,     -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient_domain)}/privkey.pem" }
     set :monit_nginx_template,        -> { :default }
 
+
     # Website-Monitoring: Statt der alten :monit_website_check_*-Variablen wird nun :monit_websites_to_check genutzt
+    # Website: { name: String, domain: String, ssl: Boolean, check_content: Boolean, path: String, content: String }
     set :monit_websites_to_check,     -> { [] }
 
+
     # File-Monitoring: Überwacht Dateien (z. B. Log-Dateien)
+    # FILE: { name: String, path: String, max_size: Integer, clear: Boolean }
     set :monit_files_to_check,        -> { [] }
+
 
     # URL für m/Monit API oder eigenen Service
     set :monit_mmonit_url,            -> { false }
+
 
     # Slack-Alerts: Sendet Benachrichtigungen via Slack API
     set :monit_use_slack,             -> { false }
     set :monit_slack_webhook,         -> { "" }  # Slack Webhook URL
     set :monit_slack_bin_path,        -> { "/etc/monit/alert_slack.sh" }
-    
+
   end
+end
+
+
+namespace :monit do
+
+  desc "Install Monit"
+  task :install do
+    on release_roles fetch(:monit_roles) do
+      ensure_monit_installed
+    end
+  end
+
+  desc "Setup Monit and upload configurations"
+  task :setup do
+    on roles fetch(:monit_roles) do
+      # Monit-Configuration hochladen
+      monit_config( "monitrc" )      if fetch(:monit_main_rc, false)
+    end
+    # Monit-Configurationsdateien für Prozesse hochladen
+    monit_processes.each do |process|
+      invoke "monit:#{process}:configure"
+    end
+    # Monit Webclient aktivieren
+    if fetch(:monit_webclient, false) && fetch(:monit_webclient_domain, false)
+      invoke "nginx:monit:add"
+      invoke "nginx:monit:enable"
+    end
+    invoke "monit:syntax"
+    invoke "monit:reload"
+  end
+
+  namespace :process do
+    monit_processes.each do |process|
+      namespace process.to_sym do
+
+        %w[monitor unmonitor start stop restart].each do |command|
+          desc "#{command.capitalize} #{process} process"
+          task command do
+            on roles fetch(:monit_roles) do
+              monit_process_command(process, command)
+            end
+          end
+        end
+
+        ## Server specific tasks (gets overwritten by other environments!)
+        desc "Upload Monit #{process} config file (server specific)"
+        task "configure" do
+          on roles fetch(:monit_roles) do
+            monit_config( process )
+          end
+        end
+
+      end
+    end
+  end
+
+  desc "Restart all monitored processes"
+  task :restart do
+    on roles fetch(:monit_roles) do
+      monit_processes.each do |process|
+        monit_process_command(process, "restart")
+      end
+    end
+  end
+
 end
