@@ -112,6 +112,9 @@ namespace :monit do
     monit_processes.each do |process|
       invoke "monit:task:#{process}:configure"
     end
+    if fetch(:monit_use_slack, false)
+      invoke "slack:configure_monit"
+    end
     # Monit Webclient aktivieren
     if !!fetch(:monit_webclient, false)
       invoke "nginx:monit:add"
