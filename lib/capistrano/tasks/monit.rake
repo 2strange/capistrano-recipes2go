@@ -23,8 +23,8 @@ namespace :load do
 
     # Definierte Prozesse. Diese werden in den Monit-Configurationsdateien genutzt
     # set :monit_processes,             -> { %w[nginx postgresql thin website sidekiq redis pwa] }
-    set :monit_system_processes,      -> { [nginx postgresql redis] }  # or: detect_monit_system_processes() = auto-detect [nginx, postgresql, redis]
-    set :monit_app_processes,         -> { [puma] }  # puma, thin, sidekiq, etc.
+    set :monit_system_processes,      -> { %w[nginx postgresql redis] }  # or: detect_monit_system_processes() = auto-detect [nginx, postgresql, redis]
+    set :monit_app_processes,         -> { %w[puma] }  # puma, thin, sidekiq, etc.
 
     # Hauptname in den RC-Dateien (wird im Cockpit verwendet, wenn mehrere Monit-Instanzen vorliegen)
     set :monit_name,                  -> { "#{ fetch(:application) }_#{ fetch(:stage) }" }
