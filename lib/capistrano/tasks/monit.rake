@@ -216,14 +216,15 @@ Rake::Task["load:defaults"].enhance do
 
     namespace :task do
       # Jetzt wird monit_processes mit den gesetzten Defaults ausgewertet
-      monit_processes.each do |process|
+      # monit_processes.each do |process| ## doesn't work here
+      %w[nginx postgresql redis sidekiq thin puma websites files].each do |process|
         namespace process.to_sym do
 
           %w[monitor unmonitor start stop restart].each do |command|
             desc "#{command.capitalize} #{process} process"
             task command do
               on roles fetch(:monit_roles) do
-                monit_process_command(process, command)
+                monit_process_command(process, command) if monit_processes.include?(process)
               end
             end
           end
@@ -232,7 +233,7 @@ Rake::Task["load:defaults"].enhance do
           desc "Upload Monit #{process} config file (server specific)"
           task :configure do
             on roles fetch(:monit_roles) do
-              monit_config(process)
+              monit_config(process) if monit_processes.include?(process)
             end
           end
 
