@@ -10,7 +10,7 @@ check host "<%= that[:name] %>" with address <%= that[:domain] %>
   if failed 
 		port 443 protocol https 
 		with certificate valid > 3 days  
-		for 240 cycles 
+		for 60 cycles 
 		then <%= monit_alert %>
 	<% end %>
   if failed 
