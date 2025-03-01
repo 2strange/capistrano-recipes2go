@@ -137,19 +137,7 @@ namespace :nginx do
   namespace :monit do
     
     desc 'Creates MONIT WebClient configuration and upload it to the available folder'
-    task :add => ['nginx:load_vars'] do
-      on release_roles fetch(:nginx_roles) do
-        within fetch(:sites_available) do
-          config_file = fetch(:monit_nginx_template, :default)
-          if config_file == :default
-            magic_template("nginx_monit.conf", '/tmp/nginx_monit.conf')
-          else
-            magic_template(config_file, '/tmp/nginx_monit.conf')
-          end
-          execute :sudo, :mv, '/tmp/nginx_monit.conf', "monit_webclient"
-        end
-      end
-
+    task :add do
       on release_roles fetch(:nginx_roles) do
         config_file = fetch(:monit_nginx_template, :default)
         puts "📤 Uploading Monit - Nginx config"
@@ -163,7 +151,7 @@ namespace :nginx do
     end
     
     desc 'Enables MONIT WebClient creating a symbolic link into the enabled folder'
-    task :enable => ['nginx:load_vars'] do
+    task :enable do
       on release_roles fetch(:nginx_roles) do
         enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
         available_path = "/etc/nginx/sites-available/monit_webclient.conf}"
@@ -177,7 +165,7 @@ namespace :nginx do
     end
 
     desc 'Disables MONIT WebClient removing the symbolic link located in the enabled folder'
-    task :disable => ['nginx:load_vars'] do
+    task :disable do
       on release_roles fetch(:nginx_roles) do
         enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
         if test "[ -f #{ enabled_path } ]"
