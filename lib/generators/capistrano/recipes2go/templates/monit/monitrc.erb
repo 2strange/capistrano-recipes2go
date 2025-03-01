@@ -30,8 +30,8 @@ set mail-format {
     Your faithful employee,
     M O N I T
     
-    <% if fetch(:monit_webclient) %>
-    Web:      <%= fetch(:monit_webclient_use_ssl) ? "https" : "http" %>://<%= fetch(:monit_webclient_domain) %>
+    <% if fetch(:monit_webclient,false).present? %>
+    Web:      <%= fetch(:monit_webclient_ssl) ? "https" : "http" %>://<%= fetch(:monit_webclient) %>
     <% end %>
 }
 
@@ -46,7 +46,7 @@ set alert <%= fetch(:monit_mail_to) %><%= Array(fetch(:monit_ignore, nil)).count
 <% end %>
 
 
-<% if fetch(:monit_webclient) %>
+<% if fetch(:monit_webclient, false).present? %>
 set httpd port <%= fetch(:monit_http_port) %>
     allow 127.0.0.1
     allow <%= fetch(:monit_http_username) %>:<%= fetch(:monit_http_password) %>

@@ -60,20 +60,18 @@ namespace :load do
     set :monit_sidekiq_pid_path,      -> { fetch(:sidekiq_pid_path, "/home/#{fetch(:user)}/run") }  # Variable an Sidekiq angepasst
 
     # WebClient-Einstellungen: Erlaubt den externen Zugriff via nginx (mit optionaler SSL-Verschlüsselung)
-    set :monit_http_client,           -> { true }
     set :monit_http_port,             -> { 2812 }
     set :monit_http_username,         -> { "admin" }
     set :monit_http_password,         -> { "monitor" }
-    set :monit_webclient,             -> { false }  # Aktiviert nginx-Config für den Monit WebClient
-    set :monit_webclient_domain,      -> { false }  # Domain für den Webclient
-    set :monit_webclient_use_ssl,     -> { false }  # Nutzt SSL für den WebClient
-    set :monit_webclient_ssl_cert,    -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient_domain)}/fullchain.pem" }
-    set :monit_webclient_ssl_key,     -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient_domain)}/privkey.pem" }
+    set :monit_webclient,             -> { false }  # Domain für den Webclient
+    set :monit_webclient_ssl,         -> { false }  # Nutzt SSL für den WebClient
+    set :monit_webclient_ssl_cert,    -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient)}/fullchain.pem" }
+    set :monit_webclient_ssl_key,     -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient)}/privkey.pem" }
     set :monit_nginx_template,        -> { :default }
 
 
     # Website-Monitoring: Statt der alten :monit_website_check_*-Variablen wird nun :monit_websites_to_check genutzt
-    # Website: { name: String, domain: String, ssl: Boolean, check_content: Boolean, path: String, content: String }
+    # Website: { name: String, domain: String, ssl: Boolean, check_content: Boolean, path: String, content: String, path: String, cycles: Integer, timeout: Integer }
     set :monit_websites_to_check,     -> { [] }
 
 
@@ -115,7 +113,7 @@ namespace :monit do
       invoke "monit:#{process}:configure"
     end
     # Monit Webclient aktivieren
-    if fetch(:monit_webclient, false) && fetch(:monit_webclient_domain, false)
+    if fetch(:monit_webclient, false).present?
       invoke "nginx:monit:add"
       invoke "nginx:monit:enable"
     end
@@ -196,7 +194,7 @@ namespace :certbot do
   desc "Generate MONIT-WebClient LetsEncrypt certificate"
   task :monit_cert do
     on release_roles fetch(:certbot_roles) do
-      execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient_domain).gsub(/^\*?\./, '') }"
+      execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }"
     end
   end
 end
@@ -269,7 +267,7 @@ namespace :deploy do
     end
   end
   before 'deploy:finishing', :add_monit_webclient do
-    if fetch(:monit_active) && fetch(:monit_webclient, false) && fetch(:monit_webclient_domain, false)
+    if fetch(:monit_active) && fetch(:monit_webclient, false).present?
       invoke "nginx:monit:add"
       invoke "nginx:monit:enable"
     end
