@@ -38,7 +38,7 @@ module Capistrano
       def monit_config(name, destination = nil, role = nil)
         destination ||= "/etc/monit/conf.d/#{ monit_process_name(name) }.conf" if name != "monitrc"
         destination ||= "/etc/monit/monitrc"
-        template_with_role "monit/#{name}", "/tmp/monit_#{name}", role
+        template2go "monit/#{name}", "/tmp/monit_#{name}", role
         
         # Check if file has changed
         remote_checksum = capture(:md5sum, destination).split.first rescue nil
