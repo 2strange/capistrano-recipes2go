@@ -118,7 +118,7 @@ namespace :monit do
     invoke "monit:reload"
   end
 
-  namespace :process do
+  # namespace :process do
     monit_processes.each do |process|
       namespace process.to_sym do
 
@@ -141,7 +141,7 @@ namespace :monit do
 
       end
     end
-  end
+  # end
 
   desc "Restart all monitored processes"
   task :restart do
