@@ -113,7 +113,7 @@ namespace :monit do
       invoke "monit:#{process}:configure"
     end
     # Monit Webclient aktivieren
-    if fetch(:monit_webclient, false).present?
+    if !!fetch(:monit_webclient, false)
       invoke "nginx:monit:add"
       invoke "nginx:monit:enable"
     end
@@ -267,7 +267,7 @@ namespace :deploy do
     end
   end
   before 'deploy:finishing', :add_monit_webclient do
-    if fetch(:monit_active) && fetch(:monit_webclient, false).present?
+    if fetch(:monit_active) && !!fetch(:monit_webclient, false)
       invoke "nginx:monit:add"
       invoke "nginx:monit:enable"
     end

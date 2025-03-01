@@ -70,7 +70,7 @@ module Capistrano
           monit_system_process_name(process)
         else
           name = monit_app_process_name(process)
-          name += "_#{idx}" if idx.present?
+          name += "_#{idx}" if !!idx
           name
         end
       end
