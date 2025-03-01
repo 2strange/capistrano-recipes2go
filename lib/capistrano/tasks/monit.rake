@@ -158,8 +158,12 @@ namespace :nginx do
       on release_roles fetch(:nginx_roles) do
         enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf"
         available_path = "/etc/nginx/sites-available/monit_webclient.conf"
-        puts "🔗 Enabling Nginx site..."
-        execute :sudo, :ln, "-nfs", available_path, enabled_path
+        unless test "[ -h #{enabled_path} ]"
+          puts "🔗 Enabling Nginx site..."
+          execute :sudo, :ln, "-nfs", available_path, enabled_path
+        else
+          puts "✅ Nginx site is already enabled!"
+        end
       end
     end
 
