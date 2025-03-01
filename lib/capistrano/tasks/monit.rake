@@ -133,7 +133,7 @@ namespace :monit do
 
         ## Server specific tasks (gets overwritten by other environments!)
         desc "Upload Monit #{process} config file (server specific)"
-        task "configure" do
+        task :configure do
           on roles fetch(:monit_roles) do
             monit_config( process )
           end
