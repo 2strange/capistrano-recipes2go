@@ -156,8 +156,8 @@ namespace :nginx do
     desc 'Enables MONIT WebClient creating a symbolic link into the enabled folder'
     task :enable do
       on release_roles fetch(:nginx_roles) do
-        enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
-        available_path = "/etc/nginx/sites-available/monit_webclient.conf}"
+        enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf"
+        available_path = "/etc/nginx/sites-available/monit_webclient.conf"
         unless test "[ -h #{enabled_path} ]"
           puts "🔗 Enabling Nginx site..."
           execute :sudo, :ln, "-nfs", available_path, enabled_path
