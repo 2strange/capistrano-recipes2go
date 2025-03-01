@@ -8,7 +8,7 @@ User=<%= fetch(:puma_user) %>
 Group=<%= fetch(:puma_user) %>
 
 WorkingDirectory=<%= current_path %>
-ExecStart=<%= @puma_command %> -C <%= shared_path %>/config/puma.rb
+ExecStart=<%= puma_command %> -C <%= shared_path %>/config/puma.rb
 
 # PID-File explizit setzen für Monit/Überwachung
 PIDFile=<%= fetch(:puma_pid_path) %>/puma.pid

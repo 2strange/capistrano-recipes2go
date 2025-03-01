@@ -40,8 +40,6 @@ namespace :puma do
 
   def upload_puma_service
     puts "📤 Uploading Puma systemd service..."
-    @puma_command = fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:puma_user))} bundle exec puma" : "/usr/local/bin/bundle exec puma"
-
     template2go("puma_service", "/tmp/puma.service")
     
     # Ensure the config and pids folders exist

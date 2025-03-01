@@ -13,9 +13,14 @@ namespace :load do
     set :monit_roles,                 -> { :web }
     set :monit_interval,              -> { 60 }
     set :monit_bin,                   -> { '/usr/bin/monit' }
+
     set :monit_logfile,               -> { "#{shared_path}/log/monit.log" }  # Default in Monit: /var/log/monit.log
     set :monit_idfile,                -> { '/var/lib/monit/id' }
     set :monit_statefile,             -> { '/var/lib/monit/state' }
+
+    set :monit_eventqueue_dir,        -> { "#{ shared_path }/monit-events" }
+    set :monit_eventqueue_slots,      -> { 300 }
+
 
     # Status und RC-Datei: Nur eine Seite soll das RC schreiben, wenn mehrere auf einem Server Monit nutzen
     set :monit_active,                -> { true }
@@ -118,15 +123,92 @@ namespace :monit do
     invoke "monit:reload"
   end
 
-  desc "Restart all monitored processes"
-  task :restart do
-    on roles fetch(:monit_roles) do
-      monit_processes.each do |process|
-        monit_process_command(process, "restart")
+
+  %w[start stop restart syntax reload].each do |command|
+    desc "#{command.capitalize} => Monit service"
+    task command do
+      on roles fetch(:monit_roles) do
+        execute :sudo, :service, :monit, "#{command}"
       end
     end
   end
 
+end
+
+namespace :nginx do
+  namespace :monit do
+    
+    desc 'Creates MONIT WebClient configuration and upload it to the available folder'
+    task :add => ['nginx:load_vars'] do
+      on release_roles fetch(:nginx_roles) do
+        within fetch(:sites_available) do
+          config_file = fetch(:monit_nginx_template, :default)
+          if config_file == :default
+            magic_template("nginx_monit.conf", '/tmp/nginx_monit.conf')
+          else
+            magic_template(config_file, '/tmp/nginx_monit.conf')
+          end
+          execute :sudo, :mv, '/tmp/nginx_monit.conf', "monit_webclient"
+        end
+      end
+
+      on release_roles fetch(:nginx_roles) do
+        config_file = fetch(:monit_nginx_template, :default)
+        puts "📤 Uploading Monit - Nginx config"
+        if config_file == :default
+          template2go("nginx_monit.conf", "/tmp/monit_webclient.conf")
+        else
+          template2go(config_file, "/tmp/monit_webclient.conf")
+        end
+        execute :sudo, :mv, "/tmp/monit_webclient.conf", "/etc/nginx/sites-available/monit_webclient.conf"
+      end
+    end
+    
+    desc 'Enables MONIT WebClient creating a symbolic link into the enabled folder'
+    task :enable => ['nginx:load_vars'] do
+      on release_roles fetch(:nginx_roles) do
+        enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
+        available_path = "/etc/nginx/sites-available/monit_webclient.conf}"
+        unless test "[ -h #{enabled_path} ]"
+          puts "🔗 Enabling Nginx site..."
+          execute :sudo, :ln, "-nfs", available_path, enabled_path
+        else
+          puts "✅ Nginx site is already enabled!"
+        end
+      end
+    end
+
+    desc 'Disables MONIT WebClient removing the symbolic link located in the enabled folder'
+    task :disable => ['nginx:load_vars'] do
+      on release_roles fetch(:nginx_roles) do
+        enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
+        if test "[ -f #{ enabled_path } ]"
+          execute :sudo, :rm, '-f', enabled_path
+        end
+      end
+    end
+    
+  end
+end
+
+
+namespace :certbot do
+  desc "Generate MONIT-WebClient LetsEncrypt certificate"
+  task :monit_cert do
+    on release_roles fetch(:certbot_roles) do
+      execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:lets_encrypt_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient_domain).gsub(/^\*?\./, '') }"
+    end
+  end
+end
+
+namespace :slack do
+  desc 'Upload alert_slack.sh for Monit script to server'
+  task :configure_monit do
+    on roles fetch(:monit_roles) do
+      monit_config 'alert_slack', "#{ fetch(:monit_slack_bin_path) }"
+      execute :sudo, "chmod +x  #{ fetch(:monit_slack_bin_path) }"
+    end
+  end
 end
 
 
@@ -173,5 +255,30 @@ Rake::Task["load:defaults"].enhance do
       end
     end
 
+  end
+end
+
+
+
+namespace :deploy do
+  before :starting, :stop_monitoring do
+    %w[puma sidekiq thin].each do |process|
+      if fetch(:monit_active) && monit_processes.include?(command)
+        invoke "monit:task:#{process}:unmonitor"
+      end
+    end
+  end
+  before 'deploy:finishing', :add_monit_webclient do
+    if fetch(:monit_active) && fetch(:monit_webclient, false) && fetch(:monit_webclient_domain, false)
+      invoke "nginx:monit:add"
+      invoke "nginx:monit:enable"
+    end
+  end
+  after :finished, :restart_monitoring do
+    %w[puma sidekiq thin].each do |process|
+      if fetch(:monit_active) && monit_processes.include?(command)
+        invoke "monit:task:#{process}:monitor"
+      end
+    end
   end
 end

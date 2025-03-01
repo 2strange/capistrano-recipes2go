@@ -77,24 +77,7 @@ module Capistrano
 
 
       def monit_process_command(process, command)
-        case process
-        when "sidekiq"
-          for_each_process do |service_file, idx|
-            execute :sudo, "#{fetch(:monit_bin)} #{command} #{sidekiq_service_name(service_file, idx)}"
-          end
-        when "puma"
-          if fetch(:puma_workers, 1) > 1 
-            fetch(:puma_workers).times do |idx|
-              execute :sudo, "#{fetch(:monit_bin)} #{command} #{monit_app_process_name('puma', idx)}"
-            end
-          else
-            execute :sudo, "#{fetch(:monit_bin)} #{command} #{monit_app_process_name('puma')}"
-          end
-        when "thin"
-          fetch(:app_instances).times do |idx|
-            execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('thin', idx) }"
-          end
-        when "pm2"
+        if process == "pm2"
           fetch(:monit_pm2_app_instances, 0).times do |idx|
             execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('pm2', idx) }"
           end
@@ -108,6 +91,44 @@ module Capistrano
       def sidekiq_service_name(service_file, idx = nil)
         "#{fetch(:application)}_#{fetch(:stage)}_sidekiq_#{ service_file.split('-').last }"
       end
+
+
+
+      def monit_alert
+        if fetch(:monit_use_slack, false)
+          "exec #{fetch(:monit_slack_bin_path)} and repeat every 3 cycles"
+        else
+          "alert"
+        end
+      end
+
+
+
+      def init_site_check_item( domain )
+        ## defaults
+        that = { ssl: false, check_content: false, path: '/', content: '<!DOCTYPE html>', timeout: 30, cycles: 3 }
+        that.merge! domain
+        that[:name] = that[:domain]   if [nil, '', ' '].include?( that[:name] )
+        that
+      end
+
+      def init_file_check_item( file )
+        ## defaults
+        that = { name: '', path: '', max_size: 12, clear: false }
+        that.merge! file
+        that[:name] = that[:path].to_s.split('/').last   if [nil, '', ' '].include?( that[:name] )
+        that
+      end
+
+      def monit_website_list
+        Array( fetch(:monit_websites_to_check) ).map{ |x| init_site_check_item(x) }
+      end
+
+      def monit_files_list
+        Array( fetch(:monit_files_to_check) ).map{ |x| init_file_check_item(x) }
+      end
+
+
 
     end
   end

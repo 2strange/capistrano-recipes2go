@@ -1,0 +1,68 @@
+set daemon <%= fetch(:monit_interval) %>
+
+set logfile <%= fetch(:monit_logfile) %>
+set idfile <%= fetch(:monit_idfile) %>
+set statefile <%= fetch(:monit_statefile) %>
+
+set eventqueue
+    basedir <%= fetch(:monit_eventqueue_dir) %>
+    slots <%= fetch(:monit_eventqueue_slots) %>
+
+
+<% if fetch(:monit_mail_username).to_s.strip != "" && fetch(:monit_mail_password).to_s.strip != "" %>
+set mail-format {
+        from: <%= fetch(:monit_mail_from) %>
+    reply-to: <%= fetch(:monit_mail_reply_to) %>
+     subject: !!! $EVENT on $SERVICE !!!
+     message: $EVENT on $SERVICE - $DESCRIPTION.
+    
+    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+      Where:    $SERVICE
+      When:     $DATE
+      What:     $EVENT
+      Type:     $ACTION
+      More:     $DESCRIPTION
+      Server:   $HOST
+    
+    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    Your faithful employee,
+    M O N I T
+    
+    <% if fetch(:monit_webclient) %>
+    Web:      <%= fetch(:monit_webclient_use_ssl) ? "https" : "http" %>://<%= fetch(:monit_webclient_domain) %>
+    <% end %>
+}
+
+set mailserver <%= fetch(:monit_mail_server) %> port <%= fetch(:monit_mail_port) %>
+    username "<%= fetch(:monit_mail_username) %>" password "<%= fetch(:monit_mail_password) %>"
+    <% if fetch(:monit_mail_authentication) %>
+    using <%= fetch(:monit_mail_authentication) %>
+    <% end %>
+    with timeout 30 seconds
+
+set alert <%= fetch(:monit_mail_to) %><%= Array(fetch(:monit_ignore, nil)).count > 0 ? " but not on { #{ Array(fetch(:monit_ignore, nil)).join(", ") } }" : "" %>
+<% end %>
+
+
+<% if fetch(:monit_webclient) %>
+set httpd port <%= fetch(:monit_http_port) %>
+    allow 127.0.0.1
+    allow <%= fetch(:monit_http_username) %>:<%= fetch(:monit_http_password) %>
+<% end %>
+
+check system <%= fetch(:monit_name, "#{ fetch(:application) }_server") %>
+    if loadavg(5min) > 2 for 2 cycles then <%= monit_alert %>
+    if memory > 75% for 2 cycles then <%= monit_alert %>
+    if cpu(user) > 75% for 2 cycles then <%= monit_alert %>
+
+check device HardDrive with path /
+    if SPACE usage > 75% then <%= monit_alert %>
+
+
+<% if fetch(:monit_mmonit_url, false) %>
+set mmonit <%= fetch(:monit_mmonit_url, "") %>
+<% end %>
+
+include /etc/monit/conf.d/*

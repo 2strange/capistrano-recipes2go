@@ -74,6 +74,11 @@ module Capistrano
         # false
         raise "File '#{from}' was not found!!!"
       end
+
+
+      def puma_command
+        fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:puma_user))} bundle exec puma" : "/usr/local/bin/bundle exec puma"
+      end
       
       
     end

@@ -1,4 +1,14 @@
-check process puma_<%= fetch(:application) %>_<%= fetch(:stage) %> with pidfile <%= fetch(:puma_pid_path) %>/puma.pid
-  start program = "/bin/systemctl start <%= fetch(:puma_service_file) %>"
-  stop program  = "/bin/systemctl stop <%= fetch(:puma_service_file) %>"
+<% workers = fetch(:puma_workers, 1) %>
+<% if workers > 1 %>
+  <% workers.times do |idx| %>
+check process puma_<%= fetch(:application) %>_<%= fetch(:stage) %>_<%= idx %> with pidfile <%= fetch(:puma_pid_path) %>/puma_<%= idx %>.pid
+  start program = "/bin/bash -lc '<%= puma_command %> -C <%= shared_path %>/config/puma.rb'"
+  stop program  = "/bin/bash -lc '<%= puma_command %> -C <%= shared_path %>/config/puma.rb stop'"
   if totalmem > 500 MB for 5 cycles then restart
+  <% end %>
+<% else %>
+check process puma_<%= fetch(:application) %>_<%= fetch(:stage) %> with pidfile <%= fetch(:puma_pid_path) %>/puma.pid
+  start program = "/bin/bash -lc '<%= puma_command %> -C <%= shared_path %>/config/puma.rb'"
+  stop program  = "/bin/bash -lc '<%= puma_command %> -C <%= shared_path %>/config/puma.rb stop'"
+  if totalmem > 500 MB for 5 cycles then restart
+<% end %>
