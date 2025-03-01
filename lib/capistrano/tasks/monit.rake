@@ -153,3 +153,35 @@ namespace :monit do
   end
 
 end
+
+
+# Diesen Block erst ausführen, sobald load:defaults abgeschlossen ist
+Rake::Task["load:defaults"].enhance do
+  namespace :monit do
+    namespace :process do
+      # Jetzt wird monit_processes mit den gesetzten Defaults ausgewertet
+      monit_processes.each do |process|
+        namespace process.to_sym do
+
+          %w[monitor unmonitor start stop restart].each do |command|
+            desc "#{command.capitalize} #{process} process"
+            task command do
+              on roles fetch(:monit_roles) do
+                monit_process_command(process, command)
+              end
+            end
+          end
+
+          # Server-spezifische Aufgabe zum Hochladen der Konfiguration
+          desc "Upload Monit #{process} config file (server specific)"
+          task :configure do
+            on roles fetch(:monit_roles) do
+              monit_config(process)
+            end
+          end
+
+        end
+      end
+    end
+  end
+end
