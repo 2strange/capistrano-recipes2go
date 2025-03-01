@@ -23,6 +23,9 @@ server {
   listen                [::]:80;
 
 <% end %>
+
+  access_log <%= fetch(:nginx_log_path) %>/nginx-monit-access.log;
+  error_log  <%= fetch(:nginx_log_path) %>/nginx-monit-error.log;
   
   server_name           <%= fetch(:monit_webclient) %>;
   
