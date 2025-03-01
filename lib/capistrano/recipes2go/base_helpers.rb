@@ -47,7 +47,7 @@ module Capistrano
 
 
 
-      def template2go(from, to)
+      def template2go(from, to, role = nil)
         erb = get_template_file(from)
         upload! StringIO.new( ERB.new(erb).result(binding) ), to
       end
@@ -56,12 +56,6 @@ module Capistrano
       def render2go(tmpl)
         erb = get_template_file(tmpl)
         ERB.new(erb).result(binding)
-      end
-      
-
-      def template_with_role(from, to, role = nil)
-        erb = get_template_file(from)
-        upload! StringIO.new(ERB.new(erb).result(binding)), to
       end
       
       
