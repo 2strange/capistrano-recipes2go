@@ -77,7 +77,24 @@ module Capistrano
 
 
       def monit_process_command(process, command)
-        if process == "pm2"
+        case process
+        when "sidekiq"
+          for_each_process do |service_file, idx|
+            execute :sudo, "#{fetch(:monit_bin)} #{command} #{sidekiq_service_name(service_file, idx)}"
+          end
+        #when "puma"
+        #  if fetch(:puma_workers, 1) > 1 
+        #    fetch(:puma_workers).times do |idx|
+        #      execute :sudo, "#{fetch(:monit_bin)} #{command} #{monit_app_process_name('puma', idx)}"
+        #    end
+        #  else
+        #    execute :sudo, "#{fetch(:monit_bin)} #{command} #{monit_app_process_name('puma')}"
+        #  end
+        #when "thin"
+        #  fetch(:app_instances).times do |idx|
+        #    execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('thin', idx) }"
+        #  end
+        when "pm2"
           fetch(:monit_pm2_app_instances, 0).times do |idx|
             execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('pm2', idx) }"
           end
