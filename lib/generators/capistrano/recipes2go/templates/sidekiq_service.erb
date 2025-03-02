@@ -5,6 +5,8 @@ After=syslog.target network.target
 [Service]
 Type=notify
 WatchdogSec=10
+KillMode=mixed
+TimeoutStopSec=10
 
 WorkingDirectory=<%= current_path %>
 
@@ -16,7 +18,6 @@ ExecStart=/usr/local/bin/bundle exec sidekiq <%= @sidekiq_args %>
 
 # Ensure systemd correctly tracks the Sidekiq process
 PIDFile=<%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid
-
 
 ## Ensure PID-File is created and removed properly
 ExecStartPost=/bin/bash -c 'echo $MAINPID > <%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid'
