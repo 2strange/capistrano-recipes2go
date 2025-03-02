@@ -24,8 +24,8 @@ server {
 
 <% end %>
 
-  access_log <%= fetch(:nginx_log_path) %>/nginx-monit-access.log;
-  error_log  <%= fetch(:nginx_log_path) %>/nginx-monit-error.log;
+  access_log <%= fetch(:nginx_log_path) %>/monit-nginx-access.log;
+  error_log  <%= fetch(:nginx_log_path) %>/monit-nginx-error.log;
   
   server_name           <%= fetch(:monit_webclient) %>;
   

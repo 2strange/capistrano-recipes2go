@@ -35,8 +35,8 @@ Restart=on-failure
 ## Logging
 # StandardOutput=journal
 # StandardError=journal
-StandardOutput=file:<%= fetch(:sidekiq_log_path) %>/<%= @service_file %>.log
-StandardError=file:<%= fetch(:sidekiq_log_path) %>/<%= @service_file %>_error.log
+StandardOutput=file:<%= fetch(:sidekiq_log_path) %>/sidekiq.log
+StandardError=file:<%= fetch(:sidekiq_log_path) %>/sidekiq_error.log
 SyslogIdentifier=sidekiq_<%= fetch(:application) %>
 
 [Install]
