@@ -1,7 +1,7 @@
 # Monit configuration for SIDEKIQ-six :  <%= fetch(:application) %>  (<%= fetch(:stage) %>)
 <% for_each_process do |service_file, idx| %>
 
-CHECK process <%= sidekiq_service_name(service_file) %> with pidfile <%= fetch(:monit_sidekiq_pid_path) %>/<%= service_file %>.pid
+CHECK process <%= service_file %> with pidfile <%= fetch(:monit_sidekiq_pid_path) %>/<%= service_file %>.pid
 
   <% if fetch(:sidekiq_ruby_vm) == :rvm %>
   start program = "/bin/bash -lc '<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @side_kiq_args %>'" with timeout <%= fetch(:monit_sidekiq_timeout_sec, 90) %> seconds  # for rvm
