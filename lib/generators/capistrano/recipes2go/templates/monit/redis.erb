@@ -1,5 +1,5 @@
 # Monit configuration for REDIS :  <%= fetch(:application) %>
-check process redis with pidfile <%= fetch(:redis_pid) %>
+check process redis with pidfile <%= fetch(:monit_redis_pid) %>
     start program = "/etc/init.d/redis-server start"
     stop program = "/etc/init.d/redis-server stop"
     # if does not exist then start # (default)

@@ -1,10 +1,12 @@
+require 'capistrano/recipes2go/base_helpers'
 require 'capistrano/recipes2go/sidekiq_helpers'
+include Capistrano::Recipes2go::BaseHelpers
 include Capistrano::Recipes2go::SidekiqHelpers
 
 namespace :load do
   task :defaults do
     set :sidekiq_default_hooks,   -> { true }
-    set :sidekiq_service_file,    -> { "sidekiq_#{fetch(:application)}_#{fetch(:stage)}" }
+    set :sidekiq_service_file,    -> { "#{fetch(:application)}_#{fetch(:stage)}_sidekiq" }
     set :sidekiq_timeout,         -> { 10 }
     set :sidekiq_roles,           -> { :app }
     set :sidekiq_processes,       -> { 1 }
@@ -13,7 +15,7 @@ namespace :load do
     set :sidekiq_queued_processes,-> { [] }
 
     set :sidekiq_service_path,    -> { "/lib/systemd/system" }
-    set :sidekiq_pid_path,        -> { "/home/#{fetch(:user)}/run" }
+    set :sidekiq_pid_path,        -> { "#{shared_path}/pids" }
     set :sidekiq_template,        -> { :default }
 
     set :sidekiq_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )
@@ -23,35 +25,6 @@ namespace :load do
 end
 
 namespace :sidekiq do
-
-  def upload_service(service_file, idx = 0)
-    args = []
-    args.push "--environment #{fetch(:stage)}"
-    args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
-    args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-
-    if fetch(:sidekiq_special_queues)
-      queue_config = sidekiq_special_config(idx)
-      args.push "--queue #{queue_config[:queue] || 'default'}"
-      args.push "--concurrency #{queue_config[:concurrency] || 7}"
-    else
-      Array(fetch(:sidekiq_queue)).each do |queue|
-        args.push "--queue #{queue}"
-      end
-      args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
-    end
-
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
-    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
-
-    @service_file   = service_file
-    @sidekiq_args   = args.compact.join(' ')
-
-    template_file = fetch(:sidekiq_template, :default) == :default ? "sidekiq.service" : fetch(:sidekiq_template)
-
-    template2go(template_file, '/tmp/sidekiq.service')
-    execute :sudo, :mv, '/tmp/sidekiq.service', "#{fetch(:sidekiq_service_path)}/#{service_file}.service"
-  end
 
   desc "Upload Sidekiq systemd service files"
   task :upload_services do

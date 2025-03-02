@@ -45,6 +45,36 @@ module Capistrano
         end
       end
 
+
+      def upload_service(service_file, idx = 0)
+        args = []
+        args.push "--environment #{fetch(:stage)}"
+        args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
+        args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
+
+        if fetch(:sidekiq_special_queues)
+          queue_config = sidekiq_special_config(idx)
+          args.push "--queue #{queue_config[:queue] || 'default'}"
+          args.push "--concurrency #{queue_config[:concurrency] || 7}"
+        else
+          Array(fetch(:sidekiq_queue)).each do |queue|
+            args.push "--queue #{queue}"
+          end
+          args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
+        end
+
+        args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+        args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
+
+        @service_file   = service_file
+        @sidekiq_args   = args.compact.join(' ')
+
+        template_file = fetch(:sidekiq_template, :default) == :default ? "sidekiq_service" : fetch(:sidekiq_template)
+
+        template2go(template_file, '/tmp/sidekiq.service')
+        execute :sudo, :mv, '/tmp/sidekiq.service', "#{fetch(:sidekiq_service_path)}/#{service_file}.service"
+      end
+
     end
   end
 end

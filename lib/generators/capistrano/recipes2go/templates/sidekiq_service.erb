@@ -14,6 +14,10 @@ ExecStart=<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @side
 ExecStart=/usr/local/bin/bundle exec sidekiq <%= @side_kiq_args %>
 <% end %>
 
+# Ensure systemd correctly tracks the Sidekiq process
+PIDFile=<%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid
+
+
 ## Ensure PID-File is created and removed properly
 ExecStartPost=/bin/bash -c 'echo $MAINPID > <%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid'
 ExecStopPost=/bin/bash -c 'rm -f <%= fetch(:sidekiq_pid_path) %>/<%= @service_file %>.pid'

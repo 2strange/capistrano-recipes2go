@@ -47,17 +47,23 @@ namespace :load do
     set :monit_ignore,                -> { [] }  # z. B. %w[action pid]
 
     # Zusätzliche Einstellungen für PostgreSQL
-    set :monit_pg_pid,                -> { "/var/run/postgresql/12-main.pid" }
+    set :monit_pg_pid,                -> { "/var/run/postgresql/17-main.pid" }
+
+    # Einstellungen für Redis
+    set :monit_redis_pid,             -> { fetch(:redis_pid, "/var/run/redis/redis-server.pid") }
+
+    # Einstellungen für Puma (benötigt secrets_key_base)
+    set :monit_puma_totalmem_mb,      -> { 500 }
+    set :monit_puma_pid_path,         -> { fetch(:puma_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Thin (benötigt secrets_key_base)
-    set :monit_thin_totalmem_mb,      -> { 300 }
-    set :monit_thin_pid_path,         -> { fetch(:thin_pid_path, "/home/#{fetch(:user)}/run") }
-    set :thin_sysd_roles,             -> { fetch(:thin_roles) }
+    set :monit_thin_totalmem_mb,      -> { 500 }
+    set :monit_thin_pid_path,         -> { fetch(:thin_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Sidekiq (ehemals sidekiq_six, jetzt in "sidekiq" umbenannt)
-    set :monit_sidekiq_totalmem_mb,   -> { 300 }
+    set :monit_sidekiq_totalmem_mb,   -> { 500 }
     set :monit_sidekiq_timeout_sec,   -> { 90 }
-    set :monit_sidekiq_pid_path,      -> { fetch(:sidekiq_pid_path, "/home/#{fetch(:user)}/run") }  # Variable an Sidekiq angepasst
+    set :monit_sidekiq_pid_path,      -> { fetch(:sidekiq_pid_path, "#{shared_path}/pids") }  # Variable an Sidekiq angepasst
 
     # WebClient-Einstellungen: Erlaubt den externen Zugriff via nginx (mit optionaler SSL-Verschlüsselung)
     set :monit_http_port,             -> { 2812 }
