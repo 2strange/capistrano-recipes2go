@@ -11,9 +11,9 @@ TimeoutStopSec=10
 WorkingDirectory=<%= current_path %>
 
 <% if fetch(:sidekiq_ruby_vm) == :rvm %>
-ExecStart=<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @sidekiq_args %>
+ExecStart=sudo -u <%= fetch(:sidekiq_user) %> bash -c "<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @sidekiq_args %>"
 <% else %>
-ExecStart=/usr/local/bin/bundle exec sidekiq <%= @sidekiq_args %>
+ExecStart=sudo -u <%= fetch(:sidekiq_user) %> bash -c "/usr/local/bin/bundle exec sidekiq <%= @sidekiq_args %>"
 <% end %>
 
 # Ensure systemd correctly tracks the Sidekiq process
