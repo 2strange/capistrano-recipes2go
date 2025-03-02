@@ -32,6 +32,7 @@ namespace :load do
 
     ## symlink puma config file
     append :linked_files, "config/puma.rb"
+    append :linked_dirs, "log", "pids", "tmp/sockets"
 
   end
 end
@@ -41,7 +42,7 @@ namespace :puma do
   def upload_puma_service
     puts "📤 Uploading Puma systemd service..."
     template2go("puma_service", "/tmp/puma.service")
-    
+
     # Ensure the config and pids folders exist
     ensure_shared_config_path
     ensure_shared_pids_path

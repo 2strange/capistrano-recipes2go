@@ -11,9 +11,9 @@ TimeoutStopSec=10
 WorkingDirectory=<%= current_path %>
 
 <% if fetch(:sidekiq_ruby_vm) == :rvm %>
-ExecStart=sudo -u <%= fetch(:sidekiq_user) %> bash -c "<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @sidekiq_args %>"
+ExecStart=bash -lc "<%= rvm_command(fetch(:sidekiq_user)) %> bundle exec sidekiq <%= @sidekiq_args %>"
 <% else %>
-ExecStart=sudo -u <%= fetch(:sidekiq_user) %> bash -c "/usr/local/bin/bundle exec sidekiq <%= @sidekiq_args %>"
+ExecStart=bash -lc "/usr/local/bin/bundle exec sidekiq <%= @sidekiq_args %>"
 <% end %>
 
 # Ensure systemd correctly tracks the Sidekiq process
@@ -33,8 +33,10 @@ RestartSec=1
 Restart=on-failure
 
 ## Logging
-StandardOutput=append
-StandardError=append
+# StandardOutput=journal
+# StandardError=journal
+StandardOutput=file:<%= fetch(:sidekiq_log_path) %>/<%= @service_file %>.log
+StandardError=file:<%= fetch(:sidekiq_log_path) %>/<%= @service_file %>_error.log
 SyslogIdentifier=sidekiq_<%= fetch(:application) %>
 
 [Install]

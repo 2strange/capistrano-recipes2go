@@ -22,6 +22,8 @@ namespace :load do
     set :sidekiq_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )
     set :sidekiq_user,            -> { fetch(:user, 'deploy') }
     set :sidekiq_log_lines,       -> { 100 }
+
+    append :linked_dirs, "pids", "log"
   end
 end
 
