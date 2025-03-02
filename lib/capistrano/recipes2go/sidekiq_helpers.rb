@@ -16,7 +16,9 @@ module Capistrano
           fetch(:sidekiq_queued_processes, []).each do |qp|
             count = (qp[:processes] || 1).to_i
             count.times do |idx|
-              services << "#{fetch(:sidekiq_service_file)}-#{qp[:queue]}-#{idx}"
+              service_name = "#{fetch(:sidekiq_service_file)}-#{qp[:queue]}"
+              service_name += "-#{idx}" if count > 1
+              services << service_name
             end
           end
         else
