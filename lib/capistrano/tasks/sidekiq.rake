@@ -16,6 +16,7 @@ namespace :load do
 
     set :sidekiq_service_path,    -> { "/lib/systemd/system" }
     set :sidekiq_pid_path,        -> { "#{shared_path}/pids" }
+    set :sidekiq_log_path,        -> { "#{shared_path}/log" }
     set :sidekiq_template,        -> { :default }
 
     set :sidekiq_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )

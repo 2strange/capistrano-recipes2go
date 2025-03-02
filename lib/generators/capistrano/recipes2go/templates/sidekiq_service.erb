@@ -32,8 +32,8 @@ RestartSec=1
 Restart=on-failure
 
 ## Logging
-StandardOutput=journal
-StandardError=journal
+StandardOutput=append
+StandardError=append
 SyslogIdentifier=sidekiq_<%= fetch(:application) %>
 
 [Install]
