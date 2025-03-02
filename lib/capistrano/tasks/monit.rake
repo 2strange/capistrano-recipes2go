@@ -267,7 +267,7 @@ end
 namespace :deploy do
   before :starting, :stop_monitoring do
     %w[puma sidekiq thin].each do |process|
-      if fetch(:monit_active) && monit_processes.include?(command)
+      if fetch(:monit_active) && monit_processes.include?(process)
         invoke "monit:task:#{process}:unmonitor"
       end
     end
@@ -280,7 +280,7 @@ namespace :deploy do
   end
   after :finished, :restart_monitoring do
     %w[puma sidekiq thin].each do |process|
-      if fetch(:monit_active) && monit_processes.include?(command)
+      if fetch(:monit_active) && monit_processes.include?(process)
         invoke "monit:task:#{process}:monitor"
       end
     end
