@@ -82,7 +82,7 @@ module Capistrano
             execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('pm2', idx) }"
           end
         else
-          execute :sudo, "#{fetch(:monit_bin)} #{command} #{process}"
+          execute :sudo, "#{fetch(:monit_bin)} #{command} #{monit_process_name(process)}"
         end
       end
 
