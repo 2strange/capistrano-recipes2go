@@ -65,6 +65,23 @@ namespace :certbot do
       execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:certbot_email)} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
     end
   end
+
+
+  desc "Delete LetsEncrypt certificate"
+  task :delete do
+    on release_roles fetch(:certbot_roles) do
+      # 1️⃣ Email check with explanation
+      puts "⚠️  This will delete the certificates for the domain: #{Array(fetch(:certbot_domains))[0]}"
+      ask(:certbot_delete_cert, "Are you sure? (yes|no):")
+      if fetch(:certbot_delete_cert).to_s.downcase == "yes"
+        # Execute Certbot delete
+        puts "🔍  Deleting certificate... #{Array(fetch(:certbot_domains))[0]}"
+        execute :sudo, "certbot --non-interactive delete --cert-name #{ Array(fetch(:certbot_domains))[0] }"
+      else
+        puts "🔍  Skipping certificate deletion..."
+      end
+    end
+  end
   
   
   
