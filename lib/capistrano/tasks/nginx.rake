@@ -198,6 +198,17 @@ namespace :nginx do
       puts "✅ Nginx reconfiguration complete!"
     end
   end
+
+
+  desc "Fix Nginx folder rights .. if permission problem occurs"
+  task :fix_folder_rights do
+    on release_roles fetch(:nginx_roles) do
+      execute :sudo, "chmod o+x /home/#{fetch(:user)}"
+      execute :sudo, "chmod o+x #{fetch(:deploy_to)}"
+      execute :sudo, "chmod o+x #{current_path}"
+      execute :sudo, "chmod o+x #{shared_path}"
+    end
+  end
   
 end
 
