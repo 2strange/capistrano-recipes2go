@@ -221,10 +221,12 @@ namespace :certbot do
         certbot_email = fetch_certbot_email
         expand_option = fetch_certbot_expand_option
         domain_args = fetch_certbot_domain_args
+        user = fetch(:user, "deploy") # Adjust to your user
 
-        puts "cmd: sudo certbot certonly --manual --preferred-challenges=dns --non-interactive --agree-tos --dry-run --email #{certbot_email} #{domain_args} #{expand_option}"
-        output = capture(:sudo, "certbot certonly --manual --preferred-challenges=dns --non-interactive --agree-tos --dry-run --email #{certbot_email} #{domain_args} #{expand_option}")
-        puts output
+        puts "cmd: sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --dry-run --email #{certbot_email} #{domain_args} #{expand_option}"
+
+        puts "🔄 Starting interactive Certbot session..."
+        system("ssh -t #{user}@#{host.hostname} 'sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --dry-run --email #{certbot_email} #{domain_args} #{expand_option}'")
       end
     end
   end
@@ -236,7 +238,13 @@ namespace :certbot do
         certbot_email = fetch_certbot_email
         expand_option = fetch_certbot_expand_option
         domain_args = fetch_certbot_domain_args
-        execute :sudo, "certbot certonly --manual --preferred-challenges=dns --non-interactive --agree-tos --email #{certbot_email} #{domain_args} #{expand_option}"
+        user = fetch(:user, "deploy") # Adjust to your user
+
+
+        puts "cmd: sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --email #{certbot_email} #{domain_args} #{expand_option}"
+
+        puts "🔄 Starting interactive Certbot session..."
+        system("ssh -t #{user}@#{host.hostname} 'sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --email #{certbot_email} #{domain_args} #{expand_option}'")
       end
     end
   end
