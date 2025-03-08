@@ -13,6 +13,51 @@ namespace :load do
 end
 
 namespace :certbot do
+
+
+  # Helper method to get the email address
+  def fetch_certbot_email
+    certbot_email = fetch(:certbot_email, "").strip
+    if certbot_email.empty?
+      puts "⚠️  No email address is set for Let's Encrypt!"
+      puts "➡️  A valid email is required to receive expiration notifications."
+      puts "➡️  Please enter a valid email address:"
+      ask(:certbot_email, "Enter email for Let's Encrypt:")
+      set(:certbot_email, fetch(:certbot_email)) # Store response
+    end
+    fetch(:certbot_email)
+  end
+
+  # Helper method to determine if `--expand` should be used
+  def fetch_certbot_expand_option
+    certbot_domains = Array(fetch(:certbot_domains))
+    use_www_domains = fetch(:certbot_www_domains, false)
+    
+    should_expand = false
+    if use_www_domains || certbot_domains.length > 1
+      puts "🔍  It looks like you already have certificates or are adding new domains."
+      puts "➡️  If you want to expand an existing certificate with new domains, select 'yes'."
+      ask(:certbot_expand, "Use `--expand`? (yes/no):")
+      should_expand = fetch(:certbot_expand).downcase.strip == "yes"
+    end
+    should_expand ? "--expand" : ""
+  end
+
+  # Helper method to generate domain arguments
+  def fetch_certbot_domain_args
+    certbot_domains = Array(fetch(:certbot_domains))
+    use_www_domains = fetch(:certbot_www_domains, false)
+    
+    certbot_domains.map do |d|
+      base_domain = d.gsub(/^\*?\./, "")
+      domain_entry = "-d #{base_domain}"
+      domain_entry += "-d www.#{base_domain}" if use_www_domains
+      domain_entry
+    end.join(" ")
+  end
+
+
+  ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
   
   desc "Install certbot LetsEncrypt"
   task :install do
@@ -28,41 +73,11 @@ namespace :certbot do
   desc "Generate LetsEncrypt certificate"
   task :generate do
     on release_roles fetch(:certbot_roles) do
-      # 1️⃣ Email check with explanation
-      certbot_email = fetch(:certbot_email, "").strip
-      if certbot_email.empty?
-        puts "⚠️  No email address is set for Let's Encrypt!"
-        puts "➡️  A valid email is required to receive expiration notifications."
-        puts "➡️  Please enter a valid email address:"
-        ask(:certbot_email, "Enter email for Let's Encrypt:")
-        set(:certbot_email, fetch(:certbot_email)) # Store response
-      end
-
-      # 2️⃣ Check if `--expand` is needed
-      certbot_domains = Array(fetch(:certbot_domains))
-      use_www_domains = fetch(:certbot_www_domains, false)
-
-      should_expand = false
-
-      # If multiple domains are provided, ask the user
-      if use_www_domains || certbot_domains.length > 1
-        puts "🔍  It looks like you already have certificates or are adding new domains."
-        puts "➡️  If you want to expand an existing certificate with new domains, select 'yes'."
-        should_expand = ask(:certbot_expand, "Use `--expand`? (yes/no)").downcase.strip == "yes"
-      end
-
-      expand_option = should_expand ? "--expand" : ""
-
-      # 3️⃣ Generate domain arguments
-      domain_args = certbot_domains.map do |d|
-        base_domain = d.gsub(/^\*?\./, "")
-        domain_entry = "-d #{base_domain}"
-        domain_entry += " -d www.#{base_domain}" if use_www_domains
-        domain_entry
-      end.join(" ")
-
-      # 4️⃣ Execute Certbot
-      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{fetch(:certbot_email)} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
+      certbot_email = fetch_certbot_email
+      expand_option = fetch_certbot_expand_option
+      domain_args = fetch_certbot_domain_args
+      
+      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{certbot_email} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
     end
   end
 
@@ -145,6 +160,20 @@ namespace :certbot do
       puts "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     end
   end
+
+
+  desc "Dry-Run Renew LetsEncrypt"
+  task :renew do
+    on release_roles fetch(:certbot_roles) do
+      # execute :sudo, "#{ fetch(:certbot_path) }/certbot-auto renew --dry-run"
+      output = capture(:sudo, "certbot renew")
+      puts "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
+      output.each_line do |line|
+          puts line
+      end
+      puts "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
+    end
+  end
   
 
   # => ECDH (X25519) is automatically used → No need to generate DH params.
@@ -182,10 +211,34 @@ namespace :certbot do
       end
     end
   end
-  
-  
-  
-  
+
+
+  desc 'Get the DNS challenge txt-entry'
+  task :dns_challenge_get do
+    on release_roles fetch(:certbot_roles) do
+      within release_path do
+
+        certbot_email = fetch_certbot_email
+        expand_option = fetch_certbot_expand_option
+        domain_args = fetch_certbot_domain_args
+
+        output = capture(:certbot, "certonly --manual --preferred-challenges=dns --dry-run --email #{certbot_email} #{domain_args} #{expand_option}")
+        puts output
+      end
+    end
+  end
+
+  desc 'Run Certbot to validate the DNS challenge'
+  task :dns_challenge_validate do
+    on roles(:app) do
+      within release_path do
+        certbot_email = fetch_certbot_email
+        expand_option = fetch_certbot_expand_option
+        domain_args = fetch_certbot_domain_args
+        execute :certbot, "certonly --manual --preferred-challenges=dns --email #{certbot_email} #{domain_args} #{expand_option}"
+      end
+    end
+  end
 
   
 end
