@@ -222,7 +222,7 @@ namespace :certbot do
         expand_option = fetch_certbot_expand_option
         domain_args = fetch_certbot_domain_args
 
-        output = capture(:certbot, "certonly --manual --preferred-challenges=dns --dry-run --email #{certbot_email} #{domain_args} #{expand_option}")
+        output = capture(:sudo, "certbot certonly --manual --preferred-challenges=dns --dry-run --email #{certbot_email} #{domain_args} #{expand_option}")
         puts output
       end
     end
@@ -235,7 +235,7 @@ namespace :certbot do
         certbot_email = fetch_certbot_email
         expand_option = fetch_certbot_expand_option
         domain_args = fetch_certbot_domain_args
-        execute :certbot, "certonly --manual --preferred-challenges=dns --email #{certbot_email} #{domain_args} #{expand_option}"
+        execute :sudo, "certbot certonly --manual --preferred-challenges=dns --email #{certbot_email} #{domain_args} #{expand_option}"
       end
     end
   end
