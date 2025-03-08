@@ -162,7 +162,7 @@ namespace :certbot do
   end
 
 
-  desc "Dry-Run Renew LetsEncrypt"
+  desc "Renew LetsEncrypt certificates"
   task :renew do
     on release_roles fetch(:certbot_roles) do
       # execute :sudo, "#{ fetch(:certbot_path) }/certbot-auto renew --dry-run"
