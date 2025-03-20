@@ -37,7 +37,7 @@ namespace :load do
     # Mailer-Block: Ermöglicht den Versand von Email-Warnungen
     set :monit_mail_server,           -> { "smtp.gmail.com" }
     set :monit_mail_port,             -> { 587 }
-    set :monit_mail_authentication,   -> { false }  # Optionen: SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12
+    set :monit_mail_authentication,   -> { "AUTO" }  # Optionen: SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12
     set :monit_mail_username,         -> { "foo@example.com" }
     set :monit_mail_password,         -> { "secret" }
     set :monit_mail_to,               -> { "foo@example.com" }

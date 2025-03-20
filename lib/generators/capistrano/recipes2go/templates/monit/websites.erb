@@ -9,9 +9,10 @@ check host "<%= that[:name] %>" with address <%= that[:domain] %>
 		then <%= monit_alert %>
   if failed 
 		port 443 protocol https 
-		with certificate valid > 3 days  
-		for 60 cycles 
-		then <%= monit_alert %>
+		with certificate valid > 5 days  
+		for <%= that[:cycles] || 3 %> cycles 
+		then <%= monit_alert(55) %>
+    every "* 8,20 * * *"
 	<% end %>
   if failed 
   <% if that[:ssl] %>
