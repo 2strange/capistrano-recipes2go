@@ -208,6 +208,7 @@ namespace :certbot do
   task :monit_dns_challenge do
     on roles(:app) do
       within release_path do
+        certbot_email = fetch(:certbot_email, "").strip
         if certbot_email.empty?
           puts "⚠️  No email address is set for Let's Encrypt!"
           puts "➡️  A valid email is required to receive expiration notifications."
