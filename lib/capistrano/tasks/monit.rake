@@ -188,7 +188,8 @@ end
 
 
 namespace :certbot do
-  desc "Generate MONIT-WebClient LetsEncrypt certificate"
+
+  desc "MONIT-WebClient: Generate LetsEncrypt certificate"
   task :monit_cert do
     on release_roles fetch(:certbot_roles) do
       certbot_email = fetch(:certbot_email, "").strip
@@ -202,6 +203,28 @@ namespace :certbot do
       execute :sudo, "certbot --non-interactive --agree-tos --email #{fetch(:certbot_email)} certonly --webroot -w #{current_path}/public -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }"
     end
   end
+
+  desc 'MONIT-WebClient: Run Certbot to validate the DNS challenge'
+  task :monit_dns_challenge do
+    on roles(:app) do
+      within release_path do
+        if certbot_email.empty?
+          puts "⚠️  No email address is set for Let's Encrypt!"
+          puts "➡️  A valid email is required to receive expiration notifications."
+          puts "➡️  Please enter a valid email address:"
+          ask(:certbot_email, "Enter email for Let's Encrypt:")
+          set(:certbot_email, fetch(:certbot_email)) # Store response
+        end
+        user = fetch(:user, "deploy") # Adjust to your user
+
+        puts "cmd: sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --email #{fetch(:certbot_email)} -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }"
+
+        puts "🔄 Starting interactive Certbot session..."
+        system("ssh -t #{user}@#{host.hostname} 'sudo certbot certonly --manual --preferred-challenges=dns --agree-tos --email #{fetch(:certbot_email)} -d #{ fetch(:monit_webclient).gsub(/^\*?\./, '') }'")
+      end
+    end
+  end
+  
 end
 
 namespace :slack do
