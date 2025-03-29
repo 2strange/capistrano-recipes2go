@@ -1,5 +1,5 @@
 module Capistrano
   module Recipes2go
-    VERSION = "0.5.43"
+    VERSION = "0.5.44"
   end
 end
