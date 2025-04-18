@@ -90,6 +90,11 @@ namespace :load do
     set :monit_mmonit_url,            -> { false }
 
 
+    # m/Monit API: Sendet Benachrichtigungen via m/Monit API
+    set :monit_event_api_url,         -> { false }
+    set :monit_event_api_bin_path,    -> { "/etc/monit/alert_event.sh" }
+
+
     # Slack-Alerts: Sendet Benachrichtigungen via Slack API
     set :monit_use_slack,             -> { false }
     set :monit_slack_webhook,         -> { "" }  # Slack Webhook URL
@@ -108,6 +113,14 @@ namespace :monit do
     end
   end
 
+  desc 'Upload alert_event.sh for Monit script to server'
+  task :configure_event_script do
+    on roles fetch(:monit_roles) do
+      monit_config 'alert_event', "#{ fetch(:monit_event_api_bin_path) }"
+      execute :sudo, "chmod +x  #{ fetch(:monit_event_api_bin_path) }"
+    end
+  end
+
   desc "Setup Monit and upload configurations"
   task :setup do
     on roles fetch(:monit_roles) do
@@ -120,6 +133,9 @@ namespace :monit do
     end
     if fetch(:monit_use_slack, false)
       invoke "slack:configure_monit"
+    end
+    if fetch(:monit_event_api_url, false)
+      invoke "monit:configure_event_script"
     end
     # Monit Webclient aktivieren
     if !!fetch(:monit_webclient, false)

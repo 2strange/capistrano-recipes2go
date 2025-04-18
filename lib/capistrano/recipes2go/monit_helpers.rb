@@ -94,12 +94,27 @@ module Capistrano
 
 
 
+      # Monit alert command
       def monit_alert(cycles = 15)
-        if fetch(:monit_use_slack, false)
-          "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
-        else
-          "alert"
+        # if fetch(:monit_event_api_url, false)
+        #   # If event API is enabled, use event API alert command
+        #   "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
+        # elsif fetch(:monit_use_slack, false)
+        #   # If slack is enabled, use slack alert command
+        #   "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
+        # else
+        #   # Default alert command
+        #   "alert"
+        # end
+        cmds = []
+        if fetch(:monit_event_api_url, false)
+          cmds << "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
         end
+        if fetch(:monit_use_slack, false)
+          cmds << "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
+        end
+        cmds << "alert" if cmds.empty?
+        cmds.join("\n")
       end
 
 
