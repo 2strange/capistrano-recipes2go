@@ -11,6 +11,8 @@ namespace :load do
     set :db_pg_host,              -> { fetch(:pg_host, 'localhost') }
     set :db_pg_port,              -> { fetch(:pg_port, 5432) }
     set :db_pg_keep_backups,      -> { 3 } # Number of backups to keep locally
+    set :db_pg_backup_suffix,     -> { "#{fetch(:application)}_#{fetch(:stage)}_pg" } # Suffix for pg_dump files ([time]_[suffix].dump)
+
   end
 end
 
@@ -59,10 +61,11 @@ namespace :db do
   task :pg_dump do
 
     remote_dir = fetch(:db_remote_backup_dir, "#{shared_path}/backups")
+    file_suffix = fetch(:db_pg_backup_suffix, "#{fetch(:application)}_#{fetch(:stage)}_pg")
 
     # Zeitstempel und Stage als Variable speichern
     timestamp = Time.now.strftime("%y-%m-%d_%H-%M")
-    filename = "#{remote_dir}/#{timestamp}_#{fetch(:stage)}_pg.dump"
+    filename = "#{timestamp}_#{file_suffix}.dump"
     
     db_password = fetch(:db_pg_pass, nil)
     if db_password.to_s.empty?
@@ -84,17 +87,17 @@ namespace :db do
       # Dump erstellen im shared_path
       within shared_path do
         # PGPASSWORD-Umgebungsvariable für pg_dump setzen
-        execute %(PGPASSWORD=#{db_password} pg_dump -U #{fetch(:db_pg_user)} -h #{fetch(:db_pg_host)} -p #{fetch(:db_pg_port)} -d #{fetch(:db_pg_db)} -F c -f #{filename})
+        execute %(PGPASSWORD=#{db_password} pg_dump -U #{fetch(:db_pg_user)} -h #{fetch(:db_pg_host)} -p #{fetch(:db_pg_port)} -d #{fetch(:db_pg_db)} -F c -f #{remote_dir}/#{filename})
         
         # Dump herunterladen
-        download! filename, "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filename}"
+        download! "#{remote_dir}/#{filename}", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filename}"
         
         # Temporären Dump auf dem Server löschen
-        # execute :rm, filename
+        # execute :rm, "#{remote_dir}/#{filename}"
       end
 
       max_backups = fetch(:db_pg_keep_backups, 3)
-      file_pattern = "*_#{fetch(:stage)}_pg.dump"
+      file_pattern = "*_#{file_suffix}.dump"
 
       within remote_dir do
         puts "🧹 Bereinige Backups in #{remote_dir}, behalte nur die letzten #{max_backups}..."
