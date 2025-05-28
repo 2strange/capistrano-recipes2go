@@ -57,7 +57,7 @@ namespace :redis_uns do
   %w[count_all list_all].each do |script|
     ['old', 'new'].each do |rds|
 
-      desc "#{script.to_s.gsub(/_/,' ').titleize} Redis-Keys in all dbs .. #{rds} DB"
+      desc "#{script.to_s.gsub(/_/,' ').upcase} Redis-Keys in all dbs .. #{rds} DB"
       task "#{script}_#{rds}".to_sym do
         on roles(fetch(:redis_uns_roles)) do
           script_remote_path = "#{shared_path}/upgrade_helpers/#{script}.rb"
