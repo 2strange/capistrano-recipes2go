@@ -46,19 +46,20 @@ set alert <%= fetch(:monit_mail_to) %><%= Array(fetch(:monit_ignore, nil)).count
 <% end %>
 
 
-<% if !!fetch(:monit_webclient, false) %>
+<% if !!fetch(:monit_webclient, false) || !!fetch(:monit_mmonit_url, false) %>
+## Monit - WebInterface (needed for mmonit_url)
 set httpd port <%= fetch(:monit_http_port) %>
     allow 127.0.0.1
     allow <%= fetch(:monit_http_username) %>:<%= fetch(:monit_http_password) %>
 <% end %>
 
 check system <%= fetch(:monit_name, "#{ fetch(:application) }_server") %>
-    if loadavg(5min) > 2 for 2 cycles then <%= monit_alert %>
-    if memory > 75% for 2 cycles then <%= monit_alert %>
-    if cpu(user) > 75% for 2 cycles then <%= monit_alert %>
+    if loadavg(5min) > <%= fetch(:monit_max_load_avg, 2) %> for 2 cycles then <%= monit_alert %>
+    if memory > <%= fetch(:monit_max_memory_percent, 75) %>% for 2 cycles then <%= monit_alert %>
+    if cpu(user) > <%= fetch(:monit_max_cpu_percent, 75) %>% for 2 cycles then <%= monit_alert %>
 
 check device HardDrive with path /
-    if SPACE usage > 75% then <%= monit_alert %>
+    if SPACE usage > <%= fetch(:monit_max_hdd_percent, 75) %>% then <%= monit_alert %>
 
 
 <% if fetch(:monit_mmonit_url, false) %>

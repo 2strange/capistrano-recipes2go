@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+require 'redis'
+require 'json'
+
+def build_redis_config_hash(input)
+  return {} if input == false || input.nil?
+  raise ArgumentError, "Redis config must be a Hash or false" unless input.is_a?(Hash)
+  input
+end
+
+# Konfiguration über ENV oder fallback defaults
+NAMESPACE = ENV['REDIS_NAMESPACE'] || 'xxx_sidekiq'
+SOURCE_CONFIG = build_redis_config_hash(ENV['REDIS_SOURCE_CONFIG'] ? JSON.parse(ENV['REDIS_SOURCE_CONFIG']) : { "db" => 0 })
+TARGET_CONFIG = build_redis_config_hash(ENV['REDIS_TARGET_CONFIG'] ? JSON.parse(ENV['REDIS_TARGET_CONFIG']) : { "db" => 2 })
+
+MARKER_KEY = ENV['REDIS_MARKER_KEY'] || "app:sidekiq:db:#{NAMESPACE}"
+PATTERN = "#{NAMESPACE}:*"
+PREFIX_LEN = NAMESPACE.length + 1
+
+# Redis-Verbindungen
+source_db = Redis.new(SOURCE_CONFIG.transform_keys(&:to_sym))
+target_db = Redis.new(TARGET_CONFIG.transform_keys(&:to_sym))
+
+puts "🔁 Kopiere alle Keys mit Pattern '#{PATTERN}' von DB #{SOURCE_CONFIG["db"]} → DB #{TARGET_CONFIG["db"]}"
+puts "📍 Erzeuge Marker-Key: #{MARKER_KEY} = '#{NAMESPACE}'"
+target_db.set(MARKER_KEY, NAMESPACE)
+
+start = Time.now
+
+keys = source_db.keys(PATTERN)
+
+if keys.empty?
+  puts "⚠️  Keine Keys gefunden mit Pattern '#{PATTERN}'"
+  exit
+end
+
+migrated = 0
+
+keys.each do |full_key|
+  short_key = full_key[PREFIX_LEN..-1]
+  value = source_db.dump(full_key)
+  ttl = source_db.pttl(full_key)
+
+  if value
+    target_db.restore(short_key, ttl > 0 ? ttl : 0, value, replace: true)
+    migrated += 1
+    puts "✅ #{full_key} → #{short_key}"
+  else
+    puts "⚠️  Key '#{full_key}' existiert nicht mehr (übersprungen)"
+  end
+end
+
+puts "\n✅ Fertig. #{migrated} Keys kopiert in #{(Time.now - start).round(2)} Sekunden."

@@ -1,0 +1,5 @@
+# Check folders for <%= fetch(:application) %> [<%= fetch(:stage) %>]
+<% monit_folders_list.each do |that| %>
+check directory "<%= that[:name] %>" with path <%= that[:path] %>
+
+<% end %>

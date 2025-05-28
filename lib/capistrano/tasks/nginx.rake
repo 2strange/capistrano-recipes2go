@@ -10,6 +10,9 @@ namespace :load do
     set :nginx_remove_www,        -> { true }
     set :nginx_use_ssl,           -> { false }
 
+    # also allow http access, if ssl is enabled (full http block will be created, but only if this is set to true)
+    set :nginx_also_allow_http,   -> { false }
+
 
     ## Rails Application Server
     set :app_instances,           -> { 1 }

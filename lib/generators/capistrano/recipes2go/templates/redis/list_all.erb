@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+require 'redis'
+
+MAX_DBS = 16
+
+puts "🔍 Liste alle Keys in der Redis-Verbindung"
+
+redis_config = (ENV['REDIS_UNS_CONFIG'] ? eval(ENV['REDIS_UNS_CONFIG']) : { db: 1 })
+
+MAX_DBS.times do |db_index|
+  redis = Redis.new(redis_config.merge(db: db_index))
+  keys = redis.keys('*')
+
+  puts "\n🗂️  DB #{db_index} (#{keys.size} Keys):"
+
+  if keys.empty?
+    puts "   (leer)"
+  else
+    keys.sort.each do |key|
+      type = redis.type(key)
+      ttl = redis.ttl(key)
+      ttl_info = case ttl
+                 when -1 then "∞"
+                 when -2 then "nicht vorhanden"
+                 else "#{ttl}s"
+                 end
+      puts "   - #{key} (Typ: #{type}, TTL: #{ttl_info})"
+    end
+  end
+end

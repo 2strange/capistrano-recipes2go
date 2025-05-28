@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+require 'redis'
+require 'json'
+
+def build_redis_config_hash(input)
+  return { "db" => 0 } if input == false || input.nil?
+  raise ArgumentError, "Redis config must be a Hash or false" unless input.is_a?(Hash)
+  { "db" => 0 }.merge input
+end
+
+# Konfiguration via ENV oder Standardwerte
+namespace = ENV['REDIS_NAMESPACE'] || 'xxx_sidekiq'
+pattern   = "#{namespace}:*"
+prefix_len = namespace.length + 1
+
+source_config = build_redis_config_hash(
+  ENV['REDIS_SOURCE_CONFIG'] ? JSON.parse(ENV['REDIS_SOURCE_CONFIG']) : { "db" => 0 }
+)
+source_db = Redis.new(source_config.transform_keys(&:to_sym))
+
+puts "🧪 Suche Keys mit Pattern '#{pattern}'..."
+
+start = Time.now
+keys = source_db.keys(pattern)
+
+if keys.empty?
+  puts "⚠️  Keine Keys gefunden mit Pattern '#{pattern}'"
+  exit
+end
+
+keys.each do |full_key|
+  short_key = full_key[prefix_len..-1]
+  ttl = source_db.pttl(full_key)
+  ttl_info = case ttl
+             when -1 then "ohne TTL"
+             when -2 then "nicht mehr vorhanden"
+             else "#{ttl}ms TTL"
+             end
+  puts "- #{full_key} → #{short_key} (#{ttl_info})"
+end
+
+puts "\n✅ Suche abgeschlossen – #{keys.size} Keys würden migriert."
+puts "⏱️ Dauer: #{(Time.now - start).round(2)} Sekunden"

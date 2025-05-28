@@ -41,6 +41,7 @@ require 'capistrano/recipes2go/nvm'         # Node Version Manager helpers
 require 'capistrano/recipes2go/postgresql'  # Postgresql .. taken from capistrano-postgresql, which is not maintained anymore
 require 'capistrano/recipes2go/puma'        # Puma (App-Server) helpers
 require 'capistrano/recipes2go/redis'       # Redis helpers
+require 'capistrano/recipes2go/redis_uns'   # Redis-UnNameSpace helpers (Sidekiq 7+)
 require 'capistrano/recipes2go/sidekiq'     # Sidekiq helpers
 require 'capistrano/recipes2go/thin'        # Thin (App-Server) helpers
 require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers

@@ -27,7 +27,9 @@ module Capistrano
         processes += Array(fetch(:monit_system_processes, []))
         processes += Array(fetch(:monit_app_processes, []))
         processes << "websites"   if Array(fetch(:monit_websites_to_check, [])).any? && !processes.include?("websites")
+        processes << "hosts"      if Array(fetch(:monit_hosts_to_check, [])).any? && !processes.include?("hosts")
         processes << "files"      if Array(fetch(:monit_files_to_check, [])).any? && !processes.include?("files")
+        # processes << "folders"    if Array(fetch(:monit_folders_to_check, [])).any? && !processes.include?("folders")
         processes
       end
 
@@ -96,25 +98,26 @@ module Capistrano
 
       # Monit alert command
       def monit_alert(cycles = 15)
+        ## Doesnt work with multiple commands
+        # cmds = []
         # if fetch(:monit_event_api_url, false)
-        #   # If event API is enabled, use event API alert command
-        #   "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
-        # elsif fetch(:monit_use_slack, false)
-        #   # If slack is enabled, use slack alert command
-        #   "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
-        # else
-        #   # Default alert command
-        #   "alert"
+        #   cmds << "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
         # end
-        cmds = []
+        # if fetch(:monit_use_slack, false)
+        #   cmds << "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
+        # end
+        # cmds << "alert" if cmds.empty?
+        # cmds.join("\n")
         if fetch(:monit_event_api_url, false)
-          cmds << "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
+          # If event API is enabled, use event API alert command
+          "exec #{fetch(:monit_event_api_bin_path)} and repeat every 3 cycles"
+        elsif fetch(:monit_use_slack, false)
+          # If slack is enabled, use slack alert command
+          "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
+        else
+          # Default alert command
+          "alert"
         end
-        if fetch(:monit_use_slack, false)
-          cmds << "exec #{fetch(:monit_slack_bin_path)} and repeat every #{cycles} cycles"
-        end
-        cmds << "alert" if cmds.empty?
-        cmds.join("\n")
       end
 
 
@@ -135,12 +138,37 @@ module Capistrano
         that
       end
 
+
+      def init_folder_check_item( file )
+        ## defaults
+        that = { name: '', path: '', max_size: 20 }
+        that.merge! file
+        that[:name] = that[:path].to_s.split('/').last   if [nil, '', ' '].include?( that[:name] )
+        that
+      end
+
+      def init_host_check_item( file )
+        ## defaults
+        that = { name: '', host: 'localhost', port: 80, protocol: 'http', cycles: 3 }
+        that.merge! file
+        that[:name] = that[:host].to_s   if [nil, '', ' '].include?( that[:name] )
+        that
+      end
+
       def monit_website_list
         Array( fetch(:monit_websites_to_check) ).map{ |x| init_site_check_item(x) }
       end
 
       def monit_files_list
         Array( fetch(:monit_files_to_check) ).map{ |x| init_file_check_item(x) }
+      end
+
+      def monit_folders_list
+        Array( fetch(:monit_folders_to_check) ).map{ |x| init_folder_check_item(x) }
+      end
+
+      def monit_hosts_list
+        Array( fetch(:monit_hosts_to_check) ).map{ |x| init_host_check_item(x) }
       end
 
 

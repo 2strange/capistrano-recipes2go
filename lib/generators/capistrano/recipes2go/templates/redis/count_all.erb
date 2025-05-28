@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require 'redis'
+
+MAX_DBS = 16
+
+puts "🔢 Zähle Keys in der NEUEN Redis-Verbindung"
+
+redis_config = ENV['REDIS_UNS_CONFIG'] ? eval(ENV['REDIS_UNS_CONFIG']) : { db: 1 }
+
+total_keys = 0
+
+MAX_DBS.times do |db_index|
+  redis = Redis.new(redis_config.merge(db: db_index))
+  count = redis.dbsize
+  puts "DB #{db_index}: #{count} Keys"
+  total_keys += count
+end
+
+puts "\n📦 Gesamt: #{total_keys} Keys in allen DBs"

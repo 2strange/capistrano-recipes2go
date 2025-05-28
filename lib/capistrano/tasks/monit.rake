@@ -46,6 +46,12 @@ namespace :load do
 
     set :monit_ignore,                -> { [] }  # z. B. %w[action pid]
 
+    ## System-Checks:
+    set :monit_max_load_avg,          -> { 2 }  # Maximale durchschnittliche Systemlast (CPUs des Systems berücksichtigen, z. B. 2 CPUs = 2, 4 CPUs = 4, etc.)
+    set :monit_max_memory_percent,    -> { 75 }
+    set :monit_max_cpu_percent,       -> { 75 }
+    set :monit_max_hdd_percent,       -> { 75 }
+
     # Zusätzliche Einstellungen für PostgreSQL
     set :monit_pg_pid,                -> { "/var/run/postgresql/17-main.pid" }
 
@@ -67,8 +73,8 @@ namespace :load do
 
     # WebClient-Einstellungen: Erlaubt den externen Zugriff via nginx (mit optionaler SSL-Verschlüsselung)
     set :monit_http_port,             -> { 2812 }
-    set :monit_http_username,         -> { "admin" }
-    set :monit_http_password,         -> { "monitor" }
+    set :monit_http_username,         -> { "xaxdxmxixnx" }
+    set :monit_http_password,         -> { "zmzoznziztzozrz" }
     set :monit_webclient,             -> { false }  # Domain für den Webclient
     set :monit_webclient_ssl,         -> { false }  # Nutzt SSL für den WebClient
     set :monit_webclient_ssl_cert,    -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient)}/fullchain.pem" }
@@ -80,13 +86,21 @@ namespace :load do
     # Website: { name: String, domain: String, ssl: Boolean, check_content: Boolean, path: String, content: String, path: String, cycles: Integer, timeout: Integer }
     set :monit_websites_to_check,     -> { [] }
 
+    ## check other Hosts:
+    set :monit_hosts_to_check,        -> { [] }
+    # Website: { name: String, host: String, port: Integer, protocol: String, cycles: Integer }
+
 
     # File-Monitoring: Überwacht Dateien (z. B. Log-Dateien)
     # FILE: { name: String, path: String, max_size: Integer, clear: Boolean }
     set :monit_files_to_check,        -> { [] }
 
+    ## Check directories
+    set :monit_folders_to_check,      -> { [] }
+    ## FOLDER: { name: String, path: String, max_size: Integer }
 
-    # URL für m/Monit API oder eigenen Service
+
+    # URL für m/Monit API oder eigenen Service (monitr)
     set :monit_mmonit_url,            -> { false }
 
 
@@ -262,7 +276,7 @@ Rake::Task["load:defaults"].enhance do
     namespace :task do
       # Jetzt wird monit_processes mit den gesetzten Defaults ausgewertet
       # monit_processes.each do |process| ## doesn't work here
-      %w[nginx postgresql redis sidekiq thin puma websites files].each do |process|
+      %w[nginx postgresql redis sidekiq thin puma websites files hosts folders].each do |process|
         namespace process.to_sym do
 
           %w[monitor unmonitor start stop restart].each do |command|
