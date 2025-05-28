@@ -80,11 +80,11 @@ namespace :db do
     on roles :db do
 
       execute :mkdir, "-p", remote_dir
-      
+
       # Dump erstellen im shared_path
       within shared_path do
         # PGPASSWORD-Umgebungsvariable für pg_dump setzen
-        execute :env, "PGPASSWORD=#{db_password}", :pg_dump, "-U #{fetch(:db_pg_user)} -h #{fetch(:db_pg_host)} -p #{fetch(:db_pg_port)} -d #{fetch(:db_pg_db)} -F c -f #{filename}"
+        execute %(PGPASSWORD=#{db_password} pg_dump -U #{fetch(:db_pg_user)} -h #{fetch(:db_pg_host)} -p #{fetch(:db_pg_port)} -d #{fetch(:db_pg_db)} -F c -f #{filename})
         
         # Dump herunterladen
         download! filename, "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filename}"
