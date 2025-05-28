@@ -46,7 +46,7 @@ namespace :redis_uns do
         target_config_json  = fetch(:redis_uns_new_redis).to_json
 
         # Skript mit Umgebungsvariablen ausführen
-        within shared_path do
+        within current_path do
           execute %(REDIS_NAMESPACE=#{redis_namespace} REDIS_SOURCE_CONFIG='#{source_config_json}' REDIS_TARGET_CONFIG='#{target_config_json}' #{ruby_command} #{script_remote_path})
         end
       end
@@ -69,7 +69,7 @@ namespace :redis_uns do
           uns_config_json = ( rds == 'new' ? target_config_json : source_config_json )
 
           # Skript mit Umgebungsvariablen ausführen
-          within shared_path do
+          within current_path do
             execute %(REDIS_UNS_CONFIG='#{uns_config_json}' #{ruby_command} #{script_remote_path})
           end
         end
