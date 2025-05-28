@@ -64,8 +64,9 @@ namespace :db do
     file_suffix = fetch(:db_pg_backup_suffix, "#{fetch(:application)}_#{fetch(:stage)}_pg")
 
     # Zeitstempel und Stage als Variable speichern
-    timestamp = Time.now.strftime("%y-%m-%d_%H-%M")
+    timestamp = Time.now.strftime("%Y-%m-%d_%H-%M")
     filename = "#{timestamp}_#{file_suffix}.dump"
+    filezip = "#{timestamp}_#{file_suffix}.tar.gz"
     
     db_password = fetch(:db_pg_pass, nil)
     if db_password.to_s.empty?
@@ -89,11 +90,16 @@ namespace :db do
         # PGPASSWORD-Umgebungsvariable für pg_dump setzen
         execute %(PGPASSWORD=#{db_password} pg_dump -U #{fetch(:db_pg_user)} -h #{fetch(:db_pg_host)} -p #{fetch(:db_pg_port)} -d #{fetch(:db_pg_db)} -F c -f #{remote_dir}/#{filename})
         
+
+        # Komprimieren des Dumps
+        execute "tar -czvf #{remote_dir}/#{filezip} #{remote_dir}/#{filename}"
+
         # Dump herunterladen
-        download! "#{remote_dir}/#{filename}", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filename}"
+        # download! "#{remote_dir}/#{filename}", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filename}"
+        download! "#{remote_dir}/#{filezip}", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{filezip}"
         
         # Temporären Dump auf dem Server löschen
-        # execute :rm, "#{remote_dir}/#{filename}"
+        execute :rm, "#{remote_dir}/#{filezip}"
       end
 
       max_backups = fetch(:db_pg_keep_backups, 3)
