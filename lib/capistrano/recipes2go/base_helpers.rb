@@ -7,7 +7,8 @@ module Capistrano
       
       def rvm_command(user = fetch(:user))
         ## Systemd requires absolute paths for RVM execution
-        "/home/#{user}/.rvm/bin/rvm #{fetch(:rvm_ruby_version)} do"
+        rvm_path = fetch(:rvm_custom_path, false) || "/home/#{user}/.rvm"
+        "#{rvm_path}/bin/rvm #{fetch(:rvm_ruby_version)} do"
       end
 
 
