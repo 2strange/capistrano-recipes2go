@@ -79,7 +79,7 @@ module Capistrano
 
 
       def monit_process_command(process, command)
-        if "pm2"
+        if process == "pm2"
           fetch(:monit_pm2_app_instances, 0).times do |idx|
             execute :sudo, "#{fetch(:monit_bin)} #{command} #{ monit_app_process_name('pm2', idx) }"
           end

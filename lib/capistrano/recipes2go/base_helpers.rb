@@ -79,6 +79,11 @@ module Capistrano
       def puma_command
         fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:puma_user))} bundle exec puma" : "/usr/local/bin/bundle exec puma"
       end
+
+
+      def ruby_command
+        fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:user))} bundle exec ruby" : "/usr/local/bin/bundle exec ruby"
+      end
       
       
     end

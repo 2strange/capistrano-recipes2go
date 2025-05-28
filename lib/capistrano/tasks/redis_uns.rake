@@ -47,7 +47,7 @@ namespace :redis_uns do
 
         # Skript mit Umgebungsvariablen ausführen
         within shared_path do
-          execute %(REDIS_NAMESPACE=#{redis_namespace} REDIS_SOURCE_CONFIG='#{source_config_json}' REDIS_TARGET_CONFIG='#{target_config_json}' ruby #{script_remote_path})
+          execute %(REDIS_NAMESPACE=#{redis_namespace} REDIS_SOURCE_CONFIG='#{source_config_json}' REDIS_TARGET_CONFIG='#{target_config_json}' #{ruby_command} #{script_remote_path})
         end
       end
     end
@@ -70,7 +70,7 @@ namespace :redis_uns do
 
           # Skript mit Umgebungsvariablen ausführen
           within shared_path do
-            execute %(REDIS_UNS_CONFIG='#{uns_config_json}' ruby #{script_remote_path})
+            execute %(REDIS_UNS_CONFIG='#{uns_config_json}' #{ruby_command} #{script_remote_path})
           end
         end
       end
