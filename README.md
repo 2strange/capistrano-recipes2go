@@ -59,10 +59,10 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
 #### App Deployment
 
-- [**db** Database Management / Backups](docs/db.md) - Manage your database with Capistrano
-- [**systemd** Systemd Log Cleanup](docs/systemd.md) - Manage daily log cleanup with systemd
-- [**redis_uns** Redis Namespace Migration](docs/redis_uns.md) - Migrate Redis keys without namespaces (for Sidekiq 7+)
-- [**monit** Monit Integration](docs/monit.md) - Integrate Monit for process monitoring
+- [**db** - Database Backups](docs/db.md) - Manage your database with Capistrano
+- [**systemd** - Log Cleanup](docs/systemd.md) - Manage daily log cleanup with systemd
+- [**redis_uns** - Redis UnNameSpacing](docs/redis_uns.md) - Migrate Redis keys without namespaces (for Sidekiq 7+)
+- [**monit** - Monit Integration](docs/monit.md) - Integrate Monit for process monitoring
 
 
 
