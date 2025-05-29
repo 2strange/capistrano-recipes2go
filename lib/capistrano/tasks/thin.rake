@@ -20,7 +20,10 @@ namespace :load do
     set :thin_hooks,                  -> { true }  # Enables automatic setup/restart
 
     set :thin_daemon_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )
-    set :thin_daemon_file,            -> { "thin_#{fetch(:application)}_#{fetch(:stage)}" }
+    set :thin_daemon_file,            -> { "#{fetch(:application)}_#{fetch(:stage)}_thin" }
+
+    set :thin_daemon_old,             -> { "thin_#{fetch(:application)}_#{fetch(:stage)}" }
+
     set :thin_daemon_path,            -> { "/lib/systemd/system" }
     set :thin_pid_path,               -> { "#{shared_path}/pids" }
     set :thin_daemon_template,        -> { :default }
