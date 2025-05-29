@@ -52,7 +52,12 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
 ## 📜 Documentation
 
+#### Server Setup
+
 - [Server Setup](docs/server.md) - Setup a new server with Capistrano
+
+
+#### App Deployment
 
 - [**db** Database Management / Backups](docs/db.md) - Manage your database with Capistrano
 - [**systemd** Systemd Log Cleanup](docs/systemd.md) - Manage daily log cleanup with systemd
