@@ -68,7 +68,7 @@ module Capistrano
         args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
         
         # args.push "--logfile #{fetch(:sidekiq_log_path)}/#{service_file}.log"
-        args.push "--logfile #{fetch(:sidekiq_log_path)}/sidekiq.log"
+        # args.push "--logfile #{fetch(:sidekiq_log_path)}/sidekiq.log"
         
         args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
