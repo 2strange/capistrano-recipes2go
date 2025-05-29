@@ -9,7 +9,7 @@ namespace :load do
     ## old-style
     set :puma_service_old,        -> { "puma_#{fetch(:application)}_#{fetch(:stage)}" }
 
-    set :puma_systemd_path,       -> { "/etc/systemd/system" }
+    set :puma_systemd_path,       -> { "/lib/systemd/system" }
     set :puma_pid_path,           -> { "#{shared_path}/pids" }
     set :puma_socket_path,        -> { "#{shared_path}/tmp/sockets" }
     set :puma_state,              -> { "#{shared_path}/puma.state" }
@@ -151,21 +151,12 @@ namespace :puma do
   task :remove_old_services do
     on roles fetch(:puma_roles) do
       old_service_file = fetch(:puma_service_old, "puma_#{fetch(:application)}_#{fetch(:stage)}")
+      old_path = "/etc/systemd/system"
       
-      if test("[ -f #{fetch(:puma_systemd_path)}/#{old_service_file}.service ]")
-        unless test("systemctl is-enabled #{old_service_file} || echo disabled") == "disabled"
-          info "🔧 Enabling #{old_service_file} service..."
-          execute :sudo, "systemctl disable #{old_service_file}"
-        else
-          info "✅ #{old_service_file} is already disabled, skipping."
-        end
-        puts "🔄 Stopping old Puma service: #{old_service_file}.service"
-        execute :sudo, "systemctl stop #{old_service_file}"
-        puts "🗑 Removing old Puma service file: #{old_service_file}.service"
-        execute :sudo, :rm, "-f", "#{fetch(:puma_systemd_path)}/#{old_service_file}.service"
-      else
-        puts "⚠️  Old Puma service file #{old_service_file}.service does not exist, skipping removal."
-      end
+      remove_app_service( "Puma", fetch(:puma_systemd_path, "/lib/systemd/system"), old_service_file )
+      remove_app_service( "Puma", old_path, old_service_file )
+      remove_app_service( "Puma", old_path, fetch(:puma_service_file) )
+
     end
   end
 

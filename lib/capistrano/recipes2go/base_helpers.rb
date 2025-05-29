@@ -85,6 +85,25 @@ module Capistrano
       def ruby_command
         fetch(:puma_ruby_vm) == :rvm ? "#{rvm_command(fetch(:user))} bundle exec ruby" : "/usr/local/bin/bundle exec ruby"
       end
+
+
+
+      def remove_app_service( name = "SERVICE", serivce_path = "/lib/systemd/system", service_file = nil )
+        if test("[ -f #{serivce_path}/#{service_file}.service ]")
+          unless test("systemctl is-enabled #{service_file} || echo disabled") == "disabled"
+            info "🔧 Disabling #{service_file} service..."
+            execute :sudo, "systemctl disable #{service_file}"
+          else
+            info "✅ #{service_file} is already disabled, skipping."
+          end
+          puts "🔄 Stopping old #{name} service: #{service_file}.service"
+          execute :sudo, "systemctl stop #{service_file}"
+          puts "🗑 Removing old #{name} service file: #{service_file}.service"
+          execute :sudo, :rm, "-f", "#{serivce_path}/#{service_file}.service"
+        else
+          puts "⚠️  Old #{name} service file #{service_file}.service does not exist, skipping removal."
+        end
+      end
       
       
     end
