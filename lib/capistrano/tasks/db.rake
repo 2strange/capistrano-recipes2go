@@ -130,7 +130,7 @@ namespace :db do
 
   desc "Backup Redis DB with TTL as JSON on remote server"
   task :redis_dump do
-    redis_config = { db: 0, port: 6379, host: '127.0.0.1' }.merge fetch(:db_redis_db_config, {})
+    redis_config = { db: 0 }.merge fetch(:db_redis_db_config, {})
     
     namespace    = fetch(:db_redis_backup_namespace, nil)
     
@@ -146,9 +146,11 @@ namespace :db do
     end
 
     on roles fetch(:db_roles) do
+
+      execute :mkdir, "-p", remote_dir
+      ensure_shared_path("#{shared_path}/tmp")
+
       within current_path do
-        execute :mkdir, "-p", remote_dir
-        ensure_shared_path("#{shared_path}/tmp")
 
         script = <<~RUBY
           require 'redis'
@@ -156,12 +158,7 @@ namespace :db do
           require 'fileutils'
 
           FileUtils.mkdir_p("#{remote_dir}")
-          redis = Redis.new(
-            host: "#{redis_config[:host]}",
-            port: #{redis_config[:port]},
-            db: #{redis_config[:db]},
-            #{redis_config[:password] ? "password: '#{redis_config[:password]}'," : ""}
-          )
+          redis = Redis.new( #{redis_config.inspect} )
 
           pattern = #{namespace ? "\"#{namespace}:*\"" : '"*"'}
           prefix_len = #{namespace ? namespace.length + 1 : 0}
@@ -196,13 +193,13 @@ namespace :db do
         execute "cd #{current_path} && #{ruby_command} #{remote_script}"
 
         # Komprimieren
-        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
+        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir}/#{filename}"
         download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
-        execute :rm, "#{remote_script} #{remote_dir}/#{filename} #{remote_dir}/#{filezip}"
+        execute "rm -f #{remote_script} #{remote_dir}/#{filezip}"
 
         # Ältere Backups löschen
         keep = fetch(:db_redis_keep_backups, 3)
-        file_pattern = "*_#{file_suffix}.json"
+        file_pattern = "*#{namespace ? "__#{namespace}_" : ''}_#{file_suffix}.json"
 
         within remote_dir do
           puts "🧹 Bereinige alte Redis-Backups, behalte nur die letzten #{keep}..."
