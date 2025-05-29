@@ -131,6 +131,29 @@ namespace :thin do
       end
     end
   end
+
+
+  desc "Remove old style Thin service files (thin_APP_NAME)"
+  task :remove_old_services do
+    on roles fetch(:thin_roles) do
+      old_service_file = fetch( :thin_daemon_old, "thin_#{fetch(:application)}_#{fetch(:stage)}" )
+      
+      if test("[ -f #{fetch(:thin_daemon_path)}/#{old_service_file}.service ]")
+        unless test("systemctl is-enabled #{old_service_file} || echo disabled") == "disabled"
+          info "🔧 Disabling #{old_service_file} service..."
+          execute :sudo, "systemctl disable #{old_service_file}"
+        else
+          info "✅ #{old_service_file} is already disabled, skipping."
+        end
+        puts "🔄 Stopping old Thin service: #{old_service_file}.service"
+        execute :sudo, "systemctl stop #{old_service_file}"
+        puts "🗑 Removing old Thin service file: #{old_service_file}.service"
+        execute :sudo, :rm, "-f", "#{fetch(:thin_daemon_path)}/#{old_service_file}.service"
+      else
+        puts "⚠️  Old Thin service file #{old_service_file}.service does not exist, skipping removal."
+      end
+    end
+  end
   
 end
 
