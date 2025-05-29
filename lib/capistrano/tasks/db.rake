@@ -98,10 +98,10 @@ namespace :db do
       end
 
       # YAML verschieben ins Backup-Verzeichnis
-      execute :mv, "#{current_path}/db/data.yml", "#{shared_path}/#{filename}"
+      execute :mv, "#{current_path}/db/data.yml", "#{remote_dir}/#{filename}"
 
       # Komprimieren
-      execute "tar -czvf #{remote_dir}/#{filezip} -C #{shared_path} #{filename}"
+      execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
 
       # Download
       download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
