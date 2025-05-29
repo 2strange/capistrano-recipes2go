@@ -193,8 +193,12 @@ namespace :db do
         execute "cd #{current_path} && #{ruby_command} #{remote_script}"
 
         # Komprimieren
-        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir}/#{filename}"
+        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
+        
+        # Herunterladen
         download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
+        
+        # Temporäre Dateien löschen
         execute "rm -f #{remote_script} #{remote_dir}/#{filezip}"
 
         # Ältere Backups löschen
