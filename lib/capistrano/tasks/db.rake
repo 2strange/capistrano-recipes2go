@@ -193,7 +193,7 @@ namespace :db do
 
         remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
         upload! StringIO.new(script), remote_script
-        execute "cd #{current_path} && #{ruby_command}", remote_script
+        execute "cd #{current_path} && #{ruby_command} #{remote_script}"
 
         # Komprimieren
         execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
