@@ -1,17 +1,21 @@
 namespace :load do
   task :defaults do
-    set :db_roles,                -> { :db }
-    set :db_backup_on_deploy,     -> { false }
-    set :db_backup_type,          -> { :yaml_dumb } # or :pg_dump
-    set :db_remote_backup_dir,    -> { "#{shared_path}/backups" }
-    set :db_local_backup_dir,     -> { "db/backups" }
-    set :db_pg_db,                -> { fetch(:pg_database, "#{fetch(:application)}_#{fetch(:stage)}") }
-    set :db_pg_user,              -> { fetch(:pg_username, fetch(:user)) }
-    set :db_pg_pass,              -> { fetch(:pg_password, nil) }
-    set :db_pg_host,              -> { fetch(:pg_host, 'localhost') }
-    set :db_pg_port,              -> { fetch(:pg_port, 5432) }
-    set :db_pg_keep_backups,      -> { 3 } # Number of backups to keep locally
-    set :db_pg_backup_suffix,     -> { "#{fetch(:application)}_#{fetch(:stage)}_pg" } # Suffix for pg_dump files ([time]_[suffix].dump)
+    set :db_roles,                    -> { :db }
+    set :db_backup_on_deploy,         -> { false }
+    set :db_backup_type,              -> { :yaml_dumb } # or :pg_dump
+    set :db_remote_backup_dir,        -> { "#{shared_path}/backups" }
+    set :db_local_backup_dir,         -> { "db/backups" }
+    set :db_pg_db,                    -> { fetch(:pg_database, "#{fetch(:application)}_#{fetch(:stage)}") }
+    set :db_pg_user,                  -> { fetch(:pg_username, fetch(:user)) }
+    set :db_pg_pass,                  -> { fetch(:pg_password, nil) }
+    set :db_pg_host,                  -> { fetch(:pg_host, 'localhost') }
+    set :db_pg_port,                  -> { fetch(:pg_port, 5432) }
+    set :db_pg_keep_backups,          -> { 3 } # Number of backups to keep locally
+    set :db_pg_backup_suffix,         -> { "#{fetch(:application)}_#{fetch(:stage)}_pg" } # Suffix for pg_dump files ([time]_[suffix].dump)
+    set :db_redis_db_config,          -> { {} } # Redis backup config (db, port, host, namespace)
+    set :db_redis_backup_suffix,      -> { "#{fetch(:application)}_#{fetch(:stage)}_redis" } # Suffix for redis backup files ([time]_[suffix].json)
+    set :db_redis_keep_backups,       -> { 3 } # Number of Redis backups to keep
+    set :db_redis_backup_namespace,   -> { nil }
 
   end
 end
@@ -81,7 +85,7 @@ namespace :db do
     end
     
     # Auf dem Server: Datenbankdump erstellen
-    on roles :db do
+    on roles fetch(:db_roles) do
 
       execute :mkdir, "-p", remote_dir
 
@@ -121,6 +125,97 @@ namespace :db do
 
     end
   end
+
+
+
+  desc "Backup Redis DB with TTL as JSON on remote server"
+  task :redis_dump do
+    redis_config = { db: 0, port: 6379, host: '127.0.0.1' }.merge fetch(:db_redis_db_config, {})
+    
+    namespace    = fetch(:db_redis_backup_namespace, nil)
+    
+    remote_dir   = fetch(:db_remote_backup_dir, "#{shared_path}/backups")
+    local_dir    = fetch(:db_local_backup_dir, 'db/backups')
+    file_suffix  = fetch(:db_redis_backup_suffix, "#{fetch(:application)}_#{fetch(:stage)}_redis")
+    timestamp    = Time.now.strftime("%Y-%m-%d_%H-%M")
+    filename     = "#{timestamp}#{namespace.present? "__#{namespace}_" : ''}_#{file_suffix}.json"
+    filezip      = "#{timestamp}#{namespace.present? "__#{namespace}_" : ''}_#{file_suffix}.tar.gz"
+
+    run_locally do
+      execute :mkdir, "-p #{local_dir}"
+    end
+
+    on roles fetch(:db_roles) do
+      within shared_path do
+        execute :mkdir, "-p", remote_dir
+
+        script = <<~RUBY
+          require 'redis'
+          require 'json'
+          require 'fileutils'
+
+          FileUtils.mkdir_p("#{remote_dir}")
+          redis = Redis.new(
+            host: "#{host}",
+            port: #{port},
+            db: #{db_index},
+            #{password ? "password: '#{password}'," : ""}
+          )
+
+          pattern = #{namespace ? "\"#{namespace}:*\"" : '"*"'}
+          prefix_len = #{namespace ? namespace.length + 1 : 0}
+
+          keys = redis.keys(pattern)
+          File.open("#{remote_dir}/#{filename}", "w") do |f|
+            keys.each do |key|
+              short_key = key[prefix_len..-1] if #{namespace ? "true" : "false"}
+              store_key = #{namespace ? "short_key || key" : "key"}
+
+              type = redis.type(key)
+              ttl  = redis.pttl(key)
+
+              value = case type
+                      when "string" then redis.get(key)
+                      when "hash"   then redis.hgetall(key)
+                      when "list"   then redis.lrange(key, 0, -1)
+                      when "set"    then redis.smembers(key)
+                      when "zset"   then redis.zrange(key, 0, -1, with_scores: true)
+                      else nil
+                      end
+
+              f.puts({ key: store_key, type: type, value: value, ttl: ttl }.to_json)
+            end
+          end
+
+          puts "✅ Redis-Backup geschrieben: #{remote_dir}/#{filename}"
+        RUBY
+
+        remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
+        upload! StringIO.new(script), remote_script
+        execute :ruby, remote_script
+
+        # Komprimieren
+        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
+        download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
+        execute :rm, "#{remote_script} #{remote_dir}/#{filename} #{remote_dir}/#{filezip}"
+
+        # Ältere Backups löschen
+        keep = fetch(:db_redis_keep_backups, 3)
+        file_pattern = "*_#{file_suffix}.json"
+
+        within remote_dir do
+          puts "🧹 Bereinige alte Redis-Backups, behalte nur die letzten #{keep}..."
+          execute :bash, "-c", %Q{
+            cd #{remote_dir} &&
+            ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --
+          }
+        end
+      end
+    end
+  end
+
+
+  ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
   
   desc "upload data.yml to server and load it = DELETES EXISTING DATA"
   task :upload_and_replace_data do
