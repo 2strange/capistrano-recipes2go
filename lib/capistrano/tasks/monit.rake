@@ -59,15 +59,15 @@ namespace :load do
     set :monit_redis_pid,             -> { fetch(:redis_pid, "/var/run/redis/redis-server.pid") }
 
     # Einstellungen für Puma (benötigt secrets_key_base)
-    set :monit_puma_totalmem_mb,      -> { 500 }
+    set :monit_puma_totalmem_mb,      -> { 1024 }
     set :monit_puma_pid_path,         -> { fetch(:puma_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Thin (benötigt secrets_key_base)
-    set :monit_thin_totalmem_mb,      -> { 500 }
+    set :monit_thin_totalmem_mb,      -> { 1024 }
     set :monit_thin_pid_path,         -> { fetch(:thin_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Sidekiq (ehemals sidekiq_six, jetzt in "sidekiq" umbenannt)
-    set :monit_sidekiq_totalmem_mb,   -> { 500 }
+    set :monit_sidekiq_totalmem_mb,   -> { 1024 }
     set :monit_sidekiq_timeout_sec,   -> { 90 }
     set :monit_sidekiq_pid_path,      -> { fetch(:sidekiq_pid_path, "#{shared_path}/pids") }  # Variable an Sidekiq angepasst
 

@@ -43,6 +43,7 @@ require 'capistrano/recipes2go/puma'        # Puma (App-Server) helpers
 require 'capistrano/recipes2go/redis'       # Redis helpers
 require 'capistrano/recipes2go/redis_uns'   # Redis-UnNameSpace helpers (Sidekiq 7+)
 require 'capistrano/recipes2go/sidekiq'     # Sidekiq helpers
+require 'capistrano/recipes2go/systemd'     # Systemd helpers
 require 'capistrano/recipes2go/thin'        # Thin (App-Server) helpers
 require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
@@ -52,6 +53,11 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 ## 📜 Documentation
 
 - [Server Setup](docs/server.md) - Setup a new server with Capistrano
+
+- [**db** Database Management / Backups](docs/db.md) - Manage your database with Capistrano
+- [**systemd** Systemd Log Cleanup](docs/systemd.md) - Manage daily log cleanup with systemd
+- [**redis_uns** Redis Namespace Migration](docs/redis_uns.md) - Migrate Redis keys without namespaces (for Sidekiq 7+)
+- [**monit** Monit Integration](docs/monit.md) - Integrate Monit for process monitoring
 
 
 

@@ -115,10 +115,7 @@ namespace :db do
 
       within remote_dir do
         puts "🧹 Bereinige alte YAML-Backups, behalte nur die letzten #{keep}..."
-        execute :bash, "-c", %Q{
-          cd #{remote_dir} &&
-          ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --
-        }
+        execute :bash, "-c", %(cd #{remote_dir} && ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --)
       end
     end
   end
@@ -176,16 +173,11 @@ namespace :db do
 
       within remote_dir do
         puts "🧹 Bereinige Backups in #{remote_dir}, behalte nur die letzten #{max_backups}..."
-
-        # Das Kommando:
         # - listet Dateien nach Zeit (`ls -tp`)
         # - filtert nur reguläre Dateien (`grep -v '/'`)
         # - schneidet ab ab Zeile (max_backups + 1) (`tail -n +N`)
         # - löscht sie mit `xargs rm`
-        execute :bash, "-c", %Q{
-          cd #{remote_dir} &&
-          ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{max_backups + 1} | xargs -r rm --
-        }
+        execute :bash, "-c", %(cd #{remote_dir} && ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{max_backups + 1} | xargs -r rm --)
       end
 
     end
@@ -278,10 +270,7 @@ namespace :db do
 
       within remote_dir do
         puts "🧹 Bereinige alte Redis-Backups, behalte nur die letzten #{keep}..."
-        execute :bash, "-c", %Q{
-          cd #{remote_dir} &&
-          ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --
-        }
+        execute :bash, "-c", %(cd #{remote_dir} && ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --)
       end
     end
   end

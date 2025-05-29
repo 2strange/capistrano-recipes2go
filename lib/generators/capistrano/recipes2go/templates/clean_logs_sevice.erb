@@ -1,0 +1,7 @@
+[Unit]
+Description=Clean up logs, older than <%= fetch(:keep_logs_for_days, 14) %> days for <%= fetch(:application) %>_<%= fetch(:stage) %>
+Wants=<%= fetch(:application) %>_<%= fetch(:stage) %>_log_cleanup.timer
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env bash -c 'cd <%= shared_path %>/log && ls -tp <%= fetch(:stage) %>.log.* | grep -v "/$" | tail -n +<%= fetch(:keep_logs_for_days, 14) + 1 %> | xargs -r rm --'
