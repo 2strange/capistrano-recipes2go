@@ -146,8 +146,9 @@ namespace :db do
     end
 
     on roles fetch(:db_roles) do
-      within shared_path do
+      within current_path do
         execute :mkdir, "-p", remote_dir
+        ensure_shared_path("#{shared_path}/tmp")
 
         script = <<~RUBY
           require 'redis'
@@ -192,7 +193,7 @@ namespace :db do
 
         remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
         upload! StringIO.new(script), remote_script
-        execute :ruby, remote_script
+        execute "#{ruby_command}", remote_script
 
         # Komprimieren
         execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
