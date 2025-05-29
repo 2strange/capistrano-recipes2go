@@ -150,46 +150,48 @@ namespace :db do
       execute :mkdir, "-p", remote_dir
       ensure_shared_path("#{shared_path}/tmp")
 
+      # Ruby-Skript zum Sichern der Redis-Daten
+      script = <<~RUBY
+        require 'redis'
+        require 'json'
+        require 'fileutils'
+
+        FileUtils.mkdir_p("#{remote_dir}")
+        redis = Redis.new( #{redis_config.inspect} )
+
+        pattern = #{namespace ? "\"#{namespace}:*\"" : '"*"'}
+        prefix_len = #{namespace ? namespace.length + 1 : 0}
+
+        keys = redis.keys(pattern)
+        File.open("#{remote_dir}/#{filename}", "w") do |f|
+          keys.each do |key|
+            short_key = key[prefix_len..-1] if #{namespace ? "true" : "false"}
+            store_key = #{namespace ? "short_key || key" : "key"}
+
+            type = redis.type(key)
+            ttl  = redis.pttl(key)
+
+            value = case type
+                    when "string" then redis.get(key)
+                    when "hash"   then redis.hgetall(key)
+                    when "list"   then redis.lrange(key, 0, -1)
+                    when "set"    then redis.smembers(key)
+                    when "zset"   then redis.zrange(key, 0, -1, with_scores: true)
+                    else nil
+                    end
+
+            f.puts({ key: store_key, type: type, value: value, ttl: ttl }.to_json)
+          end
+        end
+
+        puts "✅ Redis-Backup geschrieben: #{remote_dir}/#{filename}"
+      RUBY
+
+      remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
+      upload! StringIO.new(script), remote_script
+
       within current_path do
 
-        script = <<~RUBY
-          require 'redis'
-          require 'json'
-          require 'fileutils'
-
-          FileUtils.mkdir_p("#{remote_dir}")
-          redis = Redis.new( #{redis_config.inspect} )
-
-          pattern = #{namespace ? "\"#{namespace}:*\"" : '"*"'}
-          prefix_len = #{namespace ? namespace.length + 1 : 0}
-
-          keys = redis.keys(pattern)
-          File.open("#{remote_dir}/#{filename}", "w") do |f|
-            keys.each do |key|
-              short_key = key[prefix_len..-1] if #{namespace ? "true" : "false"}
-              store_key = #{namespace ? "short_key || key" : "key"}
-
-              type = redis.type(key)
-              ttl  = redis.pttl(key)
-
-              value = case type
-                      when "string" then redis.get(key)
-                      when "hash"   then redis.hgetall(key)
-                      when "list"   then redis.lrange(key, 0, -1)
-                      when "set"    then redis.smembers(key)
-                      when "zset"   then redis.zrange(key, 0, -1, with_scores: true)
-                      else nil
-                      end
-
-              f.puts({ key: store_key, type: type, value: value, ttl: ttl }.to_json)
-            end
-          end
-
-          puts "✅ Redis-Backup geschrieben: #{remote_dir}/#{filename}"
-        RUBY
-
-        remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
-        upload! StringIO.new(script), remote_script
         execute "cd #{current_path} && #{ruby_command} #{remote_script}"
         
       end
