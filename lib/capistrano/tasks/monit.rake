@@ -161,7 +161,7 @@ namespace :monit do
   end
 
 
-  %w[start stop restart syntax reload].each do |command|
+  %w[start stop restart reload syntax status].each do |command|
     desc "#{command.capitalize} => Monit service"
     task command do
       on roles fetch(:monit_roles) do
@@ -279,7 +279,7 @@ Rake::Task["load:defaults"].enhance do
       %w[nginx postgresql redis sidekiq thin puma websites files hosts folders].each do |process|
         namespace process.to_sym do
 
-          %w[monitor unmonitor start stop restart].each do |command|
+          %w[monitor unmonitor start stop restart status summary].each do |command|
             desc "#{command.capitalize} #{process} process"
             task command do
               on roles fetch(:monit_roles) do
