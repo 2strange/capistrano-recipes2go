@@ -229,7 +229,8 @@ namespace :db do
 
         keys = redis.keys(pattern)
         File.open("#{remote_dir}/#{filename}", "w") do |f|
-          keys.each do |key|
+          f.puts("[") # JSON-Array starten
+          keys.each_with_index do |key,idx|
             short_key = key[prefix_len..-1] if #{namespace ? "true" : "false"}
             store_key = #{fetch(:db_redis_remove_namespace, false) && namespace ? "short_key || key" : "key"}
 
@@ -245,8 +246,9 @@ namespace :db do
                     else nil
                     end
 
-            f.puts({ key: store_key, type: type, value: value, ttl: ttl }.to_json)
+            f.puts('  ' + { key: store_key, type: type, value: value, ttl: ttl }.to_json + (idx == keys.size - 1 ? '' : ','))
           end
+          f.puts("]") # JSON-Array beenden
         end
 
         puts "✅ Redis-Backup geschrieben: #{remote_dir}/#{filename}"
