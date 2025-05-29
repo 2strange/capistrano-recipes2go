@@ -9,7 +9,7 @@ set eventqueue
     slots <%= fetch(:monit_eventqueue_slots) %>
 
 
-<% if fetch(:monit_mail_username).to_s.strip != "" && fetch(:monit_mail_password).to_s.strip != "" %>
+<% if fetch(:monit_mail_server).to_s.strip != "" && fetch(:monit_mail_from).to_s.strip != "" %>
 set mail-format {
         from: <%= fetch(:monit_mail_from) %>
     reply-to: <%= fetch(:monit_mail_reply_to) %>
