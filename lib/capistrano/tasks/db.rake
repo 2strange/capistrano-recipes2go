@@ -16,6 +16,7 @@ namespace :load do
     set :db_redis_backup_suffix,      -> { "#{fetch(:application)}_#{fetch(:stage)}_redis" } # Suffix for redis backup files ([time]_[suffix].json)
     set :db_redis_keep_backups,       -> { 3 } # Number of Redis backups to keep
     set :db_redis_backup_namespace,   -> { nil }
+    set :db_redis_remove_namespace,   -> { false } # Cut namespace from keys in Redis backup
 
   end
 end
@@ -166,7 +167,7 @@ namespace :db do
         File.open("#{remote_dir}/#{filename}", "w") do |f|
           keys.each do |key|
             short_key = key[prefix_len..-1] if #{namespace ? "true" : "false"}
-            store_key = #{namespace ? "short_key || key" : "key"}
+            store_key = #{fetch(:db_redis_remove_namespace, false) && namespace ? "short_key || key" : "key"}
 
             type = redis.type(key)
             ttl  = redis.pttl(key)
