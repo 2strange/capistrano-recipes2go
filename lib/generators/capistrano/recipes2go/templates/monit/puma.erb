@@ -1,5 +1,7 @@
 # Monit configuration for PUMA :  <%= fetch(:application) %>  (<%= fetch(:stage) %>)
-<% workers = [fetch(:puma_workers, 1), 1].max %>
+<% # workers = [fetch(:puma_workers, 1), 1].max %>
+<% # puma only builds one pid file to check, no matter how many workers %>
+<% workers = 1 %>
 <% workers.times do |idx| %>
   <% if workers > 1 %>
 check process <%= monit_process_name('puma', idx) %> with pidfile <%= fetch(:monit_puma_pid_path) %>/puma_<%= idx %>.pid
