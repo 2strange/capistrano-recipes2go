@@ -138,8 +138,8 @@ namespace :db do
     local_dir    = fetch(:db_local_backup_dir, 'db/backups')
     file_suffix  = fetch(:db_redis_backup_suffix, "#{fetch(:application)}_#{fetch(:stage)}_redis")
     timestamp    = Time.now.strftime("%Y-%m-%d_%H-%M")
-    filename     = "#{timestamp}#{namespace.present? ? "__#{namespace}_" : ''}_#{file_suffix}.json"
-    filezip      = "#{timestamp}#{namespace.present? ? "__#{namespace}_" : ''}_#{file_suffix}.tar.gz"
+    filename     = "#{timestamp}#{namespace ? "__#{namespace}_" : ''}_#{file_suffix}.json"
+    filezip      = "#{timestamp}#{namespace ? "__#{namespace}_" : ''}_#{file_suffix}.tar.gz"
 
     run_locally do
       execute :mkdir, "-p #{local_dir}"
