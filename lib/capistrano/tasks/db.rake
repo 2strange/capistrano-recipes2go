@@ -191,27 +191,28 @@ namespace :db do
         remote_script = "#{shared_path}/tmp/redis_backup_#{timestamp}.rb"
         upload! StringIO.new(script), remote_script
         execute "cd #{current_path} && #{ruby_command} #{remote_script}"
-
-        # Komprimieren
-        execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
         
-        # Herunterladen
-        download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
+      end
         
-        # Temporäre Dateien löschen
-        execute "rm -f #{remote_script} #{remote_dir}/#{filezip}"
+      # Komprimieren
+      execute "tar -czvf #{remote_dir}/#{filezip} -C #{remote_dir} #{filename}"
+      
+      # Herunterladen
+      download! "#{remote_dir}/#{filezip}", "#{local_dir}/#{filezip}"
+      
+      # Temporäre Dateien löschen
+      execute "rm -f #{remote_script} #{remote_dir}/#{filezip}"
 
-        # Ältere Backups löschen
-        keep = fetch(:db_redis_keep_backups, 3)
-        file_pattern = "*#{namespace ? "__#{namespace}_" : ''}_#{file_suffix}.json"
+      # Ältere Backups löschen
+      keep = fetch(:db_redis_keep_backups, 3)
+      file_pattern = "*#{namespace ? "__#{namespace}_" : ''}_#{file_suffix}.json"
 
-        within remote_dir do
-          puts "🧹 Bereinige alte Redis-Backups, behalte nur die letzten #{keep}..."
-          execute :bash, "-c", %Q{
-            cd #{remote_dir} &&
-            ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --
-          }
-        end
+      within remote_dir do
+        puts "🧹 Bereinige alte Redis-Backups, behalte nur die letzten #{keep}..."
+        execute :bash, "-c", %Q{
+          cd #{remote_dir} &&
+          ls -tp #{file_pattern} | grep -v '/$' | tail -n +#{keep + 1} | xargs -r rm --
+        }
       end
     end
   end
