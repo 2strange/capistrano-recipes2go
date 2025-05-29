@@ -156,10 +156,10 @@ namespace :db do
 
           FileUtils.mkdir_p("#{remote_dir}")
           redis = Redis.new(
-            host: "#{host}",
-            port: #{port},
-            db: #{db_index},
-            #{password ? "password: '#{password}'," : ""}
+            host: "#{redis_config[:host]}",
+            port: #{redis_config[:port]},
+            db: #{redis_config[:db]},
+            #{redis_config[:password] ? "password: '#{redis_config[:password]}'," : ""}
           )
 
           pattern = #{namespace ? "\"#{namespace}:*\"" : '"*"'}
