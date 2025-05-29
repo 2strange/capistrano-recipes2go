@@ -96,6 +96,18 @@ namespace :sidekiq do
       puts "✅ Sidekiq services deployed and running!"
     end
   end
+
+  desc "Upload Sidekiq service, then enable it"
+  task :configure do
+    # on roles fetch(:sidekiq_roles) do
+    #   invoke "sidekiq:setup"
+    #   invoke "sidekiq:enable"
+    #   invoke "sidekiq:start"
+    #   puts "✅ Sidekiq service configured and enabled!"
+    # end
+    invoke "sidekiq:deploy"
+  end
+
 end
 
 namespace :deploy do

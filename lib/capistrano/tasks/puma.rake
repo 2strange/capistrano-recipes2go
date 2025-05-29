@@ -81,8 +81,8 @@ namespace :puma do
   desc "Setup Puma: Upload service & config (but don't enable yet)"
   task :setup do
     on roles fetch(:puma_roles) do
-      upload_puma_service
       upload_puma_config
+      upload_puma_service
       puts "✅ Puma setup completed. Service is NOT yet enabled or started."
     end
   end
@@ -96,6 +96,21 @@ namespace :puma do
       invoke "puma:start"
       puts "✅ Puma service activated and running!"
     end
+  end
+
+  desc "Upload Puma service and config, then enable it"
+  task :configure do
+    on roles fetch(:puma_roles) do
+      invoke "puma:setup"
+      invoke "puma:activate"
+      invoke "puma:enable_if_needed"
+      puts "✅ Puma service configured and enabled!"
+    end
+  end
+
+  desc "Deploy Puma (Upload & Start)"
+  task :deploy do
+    invoke "puma:configure"
   end
 
   %w[start stop restart enable disable is-enabled].each do |command|
