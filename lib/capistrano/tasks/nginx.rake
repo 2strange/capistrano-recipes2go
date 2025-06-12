@@ -197,7 +197,7 @@ namespace :nginx do
         puts "🔗 Site already enabled, skipping enable step!"
       end
       
-      invoke "nginx:service:restart"
+      invoke! "nginx:service:restart"
       puts "✅ Nginx reconfiguration complete!"
     end
   end

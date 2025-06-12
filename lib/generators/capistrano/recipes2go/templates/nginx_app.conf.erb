@@ -1,0 +1,69 @@
+###
+### Nginx App Server Config generated with capistrano-recipes2go at: <%= Time.now.strftime("%Y-%m-%d .. %H:%M .. %Z") %>
+###
+# This server runs internally, receives requests from the Proxy Nginx,
+# serves static assets, handles caching, and forwards requests to Puma/Thin.
+
+
+<% if fetch(:rails_app_server) == :thin %>
+upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
+  <% fetch(:thin_servers).to_i.times do |i| %>
+  server unix:/tmp/thin.<%= fetch(:application) %>.<%= fetch(:stage) %>.<%= i %>.sock 
+         max_fails=1 
+         fail_timeout=15s;
+  <% end %>
+}
+<% else %>
+upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
+  <% if fetch(:puma_workers).to_i > 1 %>
+    <% fetch(:puma_workers).to_i.times do |i| %>
+    server unix:<%= shared_path %>/tmp/sockets/puma.<%= i %>.sock
+           max_fails=1
+           fail_timeout=15s;
+    <% end %>
+  <% else %>
+    # Single-mode Puma (workers <= 1), use only one socket
+    server unix:<%= shared_path %>/tmp/sockets/puma.sock
+           max_fails=1
+           fail_timeout=15s;
+  <% end %>
+}
+<% end %>
+
+
+<%= render2go("nginx/rails_cache_path") %> # Caching paths for app-specific cache
+<%= render2go("nginx/media_cache_path") %> # Caching paths for media-specific cache
+
+
+# Main App Server Block
+server {
+  # Listen on the internal port where the Proxy Nginx expects to find this server.
+  # Use 0.0.0.0 to listen on all interfaces if it's in a container.
+  listen <%= fetch(:nginx_upstream_app_port) %>;
+  listen [::]:<%= fetch(:nginx_upstream_app_port) %>;
+
+  # No public server_name needed, as it's only accessed internally by IP/Port.
+  server_name localhost; # Or just '_', or the internal IP/hostname
+
+  <%= render2go("nginx/rails_options") %> # Includes root, logs, error pages, assets
+
+  <%= render2go("nginx/media_cache_server") %> # Media cache is handled here on the app server
+
+  # Try serving static files first, then pass to the application cluster
+  try_files $uri/index.html $uri @app_<%= fetch(:application) %>_<%= fetch(:stage) %>;
+
+  location @app_<%= fetch(:application) %>_<%= fetch(:stage) %> {
+    proxy_set_header X-Real-IP          $remote_addr;
+    proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto  $http_x_forwarded_proto; # Use the protocol from the original request (sent by proxy)
+    proxy_set_header Host               $http_host; # Use the original Host header (sent by proxy)
+    proxy_redirect    off;
+    <%= render2go("nginx/rails_cache_server") %> # Rails cache is handled here on the app server
+    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
+  }
+
+  # Certbot well-known: Usually handled by the proxy, so not needed here unless
+  # you have a very specific internal setup for validation.
+  # If fetch(:allow_well_known_app) is true, you could add it here
+  # location ~ /.well-known { allow all; root /path/to/your/app/root; }
+}

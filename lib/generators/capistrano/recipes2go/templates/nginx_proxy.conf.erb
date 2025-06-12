@@ -1,41 +1,22 @@
 ###
-### HTTP-Config generated with capistrano-recipes2go at: <%= Time.now.strftime("%Y-%m-%d .. %H:%M .. %Z") %>
+### Nginx Proxy Server Config generated with capistrano-recipes2go at: <%= Time.now.strftime("%Y-%m-%d .. %H:%M .. %Z") %>
 ###
+# This server acts as the public-facing entry point, handling SSL termination,
+# domain redirects, and passing requests to the internal App Nginx server.
 
-<% if fetch(:rails_app_server) == :thin %>
-upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
-  <% fetch(:thin_servers).to_i.times do |i| %>
-  server unix:/tmp/thin.<%= fetch(:application) %>.<%= fetch(:stage) %>.<%= i %>.sock 
-         max_fails=1 
-         fail_timeout=15s;
-  <% end %>
+
+# Upstream for the Internal App Nginx Server
+# This is where your App Nginx (e.g., in a Docker container or on a separate VM) listens.
+upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server {
+  server <%= fetch(:nginx_upstream_app_host) %>:<%= fetch(:nginx_upstream_app_port) %>;
+  # If you have multiple app servers, you'd list them here:
+  # server 10.0.0.6:4550;
+  # server 10.0.0.7:4550;
 }
-<% else %>
-upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
-  <% if fetch(:puma_workers).to_i > 1 %>
-    <% fetch(:puma_workers).to_i.times do |i| %>
-    server unix:<%= shared_path %>/tmp/sockets/puma.<%= i %>.sock
-           max_fails=1
-           fail_timeout=15s;
-    <% end %>
-  <% else %>
-    # Single-mode Puma (workers <= 1), use only one socket
-    server unix:<%= shared_path %>/tmp/sockets/puma.sock
-           max_fails=1
-           fail_timeout=15s;
-  <% end %>
-}
-<% end %>
-
-
-
-
-<%= render2go("nginx/rails_cache_path") %>
-<%= render2go("nginx/media_cache_path") %>
 
 
 <% if fetch(:nginx_use_ssl, false) && !fetch(:nginx_also_allow_http, false) %>
-# Redirect HTTP to HTTPS
+# Redirect HTTP to HTTPS (only if HTTP is not allowed directly)
 server {
   listen 80;
   listen [::]:80;
@@ -54,7 +35,7 @@ server {
 <% if fetch(:nginx_use_ssl) %>
 
 <% if fetch(:nginx_also_allow_http, false) %>
-# Redirect HTTP to HTTPS
+# Redirect HTTP to HTTPS (if HTTP is also allowed)
 server {
   listen 80;
   listen [::]:80;
@@ -71,7 +52,7 @@ server {
   ssl_certificate       <%= fetch(:nginx_other_ssl_cert) %>;
   ssl_certificate_key   <%= fetch(:nginx_other_ssl_key) %>;
 
-  <%= render2go("nginx/https_ssl_options") %>
+  <%= render2go("nginx/https_ssl_options") %> # SSL options are only on the proxy
 
   server_name           <%= nginx_domains.join(joiner) %>;
   return 301 https://<%= nginx_major_domain %>$request_uri;
@@ -91,7 +72,7 @@ server {
 
 
 <% if fetch(:nginx_also_allow_http, false) && fetch(:nginx_use_ssl, false) %>
-# Main HTTP Server Block
+# Main HTTP Server Block (Proxying to App Server)
 server {
   listen 80;
   listen [::]:80;
@@ -107,28 +88,33 @@ server {
   server_name <%= nginx_domains_with_www.join(joiner) %>;
   <% end %>
 
-  <%= render2go("nginx/rails_options") %>
+  access_log <%= fetch(:nginx_proxy_log_folder) %>/nginx-access.log;
+  error_log  <%= fetch(:nginx_proxy_log_folder) %>/nginx-error.log;
 
-  <%= render2go("nginx/media_cache_server") %>
+  # Certbot validation for Let's Encrypt
+  <% if fetch(:allow_well_known_proxy) %>
+  location ~ /.well-known/ {
+    allow all;
+    root <%= fetch(:nginx_proxy_well_known_root) %>;
+  }
+  <% end %>
 
-  try_files $uri/index.html $uri @app_<%= fetch(:application) %>_<%= fetch(:stage) %>;
-
-  location @app_<%= fetch(:application) %>_<%= fetch(:stage) %> {
+  # Pass all other requests to the internal App Nginx server
+  location / {
     proxy_set_header X-Real-IP          $remote_addr;
     proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto  $scheme;
-    proxy_set_header Host               $host:$server_port;
+    proxy_set_header X-Forwarded-Proto  $scheme; # Important: pass 'http' or 'https'
+    proxy_set_header Host               $host;   # Important: pass original host header
     proxy_redirect    off;
-    <%= render2go("nginx/rails_cache_server") %>
-    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
+    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server;
+    # No `try_files` here, let the app server handle static files and routing.
   }
 }
 <% end %>
 
 
-
 <% if fetch(:nginx_use_ssl) %>
-# Main SSL Server Block
+# Main SSL Server Block (Proxying to App Server)
 server {
   listen 443 ssl http2;
   listen [::]:443 ssl http2;
@@ -136,9 +122,9 @@ server {
   ssl_certificate     <%= fetch(:nginx_ssl_cert) %>;
   ssl_certificate_key <%= fetch(:nginx_ssl_key) %>;
 
-  <%= render2go("nginx/https_ssl_options") %>
+  <%= render2go("nginx/https_ssl_options") %> # SSL options are only on the proxy
 <% else %>
-# Main HTTP Server Block
+# Main HTTP Server Block (Proxying to App Server - no SSL)
 server {
   listen 80;
   listen [::]:80;
@@ -157,19 +143,25 @@ server {
   server_name <%= nginx_domains_with_www.join(joiner) %>;
   <% end %>
 
-  <%= render2go("nginx/rails_options") %>
+  access_log <%= fetch(:nginx_proxy_log_folder) %>/nginx-access.log;
+  error_log  <%= fetch(:nginx_proxy_log_folder) %>/nginx-error.log;
 
-  <%= render2go("nginx/media_cache_server") %>
+  # Certbot validation for Let's Encrypt
+  <% if fetch(:allow_well_known_proxy) %>
+  location ~ /.well-known/ {
+    allow all;
+    root <%= fetch(:nginx_proxy_well_known_root) %>;
+  }
+  <% end %>
 
-  try_files $uri/index.html $uri @app_<%= fetch(:application) %>_<%= fetch(:stage) %>;
-
-  location @app_<%= fetch(:application) %>_<%= fetch(:stage) %> {
+  # Pass all other requests to the internal App Nginx server
+  location / {
     proxy_set_header X-Real-IP          $remote_addr;
     proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto  $scheme;
-    proxy_set_header Host               $host:$server_port;
+    proxy_set_header X-Forwarded-Proto  $scheme; # Important: pass 'http' or 'https'
+    proxy_set_header Host               $host;   # Important: pass original host header
     proxy_redirect    off;
-    <%= render2go("nginx/rails_cache_server") %>
-    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster;
+    proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server;
+    # No `try_files` here, let the app server handle static files and routing.
   }
 }

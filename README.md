@@ -39,6 +39,7 @@ require 'capistrano/recipes2go/monit'       # Monit helpers
 require 'capistrano/recipes2go/nginx'       # Nginx helpers
 require 'capistrano/recipes2go/nvm'         # Node Version Manager helpers
 require 'capistrano/recipes2go/postgresql'  # Postgresql .. taken from capistrano-postgresql, which is not maintained anymore
+require 'capistrano/recipes2go/proxy_nginx' # Proxy-Nginx helpers (1 proxy => 1 app-server)
 require 'capistrano/recipes2go/puma'        # Puma (App-Server) helpers
 require 'capistrano/recipes2go/redis'       # Redis helpers
 require 'capistrano/recipes2go/redis_uns'   # Redis-UnNameSpace helpers (Sidekiq 7+)
@@ -63,6 +64,7 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 - [**systemd** - Log Cleanup](docs/systemd.md) - Manage daily log cleanup with systemd
 - [**redis_uns** - Redis UnNameSpacing](docs/redis_uns.md) - Migrate Redis keys without namespaces (for Sidekiq 7+)
 - [**monit** - Monit Integration](docs/monit.md) - Integrate Monit for process monitoring
+- [**proxy_nginx** - Nginx Integration](docs/proxy_nginx.md) - Proxy-Nginx helpers (1 proxy => 1 app-server)
 
 
 
