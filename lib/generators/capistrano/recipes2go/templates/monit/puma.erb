@@ -17,7 +17,7 @@ check process <%= monit_process_name('puma') %> with pidfile <%= fetch(:puma_pid
   GROUP puma
 
   IF TOTALMEM > <%= ( fetch(:monit_puma_totalmem_mb, 300 ).to_i * 0.75 ).to_i %> MB THEN <%= monit_alert %>
-  IF TOTALMEM > <%= fetch(:monit_puma_totalmem_mb, 300 ) %> MB FOR 3 CYCLES THEN RESTART
+  IF TOTALMEM > <%= fetch(:monit_puma_totalmem_mb, 300 ) %> MB FOR 5 CYCLES THEN RESTART
 
   IF 3 RESTARTS WITHIN 5 CYCLES THEN <%= monit_alert %>
   IF 5 RESTARTS WITHIN 5 CYCLES THEN TIMEOUT
