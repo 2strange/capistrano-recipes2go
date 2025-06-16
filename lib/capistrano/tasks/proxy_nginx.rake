@@ -1,7 +1,7 @@
-require 'capistrano/nuxt2/base_helpers'
-require 'capistrano/nuxt2/nginx_helpers'
-include Capistrano::Nuxt2::BaseHelpers
-include Capistrano::Nuxt2::NginxHelpers
+require 'capistrano/recipes2go/base_helpers'
+require 'capistrano/recipes2go/nginx_helpers'
+include Capistrano::Recipes2go::BaseHelpers
+include Capistrano::Recipes2go::NginxHelpers
 
 namespace :load do
   task :defaults do
