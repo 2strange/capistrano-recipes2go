@@ -166,7 +166,11 @@ server {
     proxy_buffers 64 512k;
     client_body_buffer_size 512k;
     client_max_body_size 0;
-    proxy_redirect    off;
+    
+    # proxy_redirect    off;
+    # FIX: Ersetze in Location-Header :<%= fetch(:nginx_upstream_port) %> egal auf welchem Host
+    proxy_redirect ~^(.+):<%= fetch(:nginx_upstream_port) %>/(.*) $1/$2;
+
     proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server;
   }
 }
