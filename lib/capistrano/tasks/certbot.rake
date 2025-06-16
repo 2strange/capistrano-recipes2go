@@ -6,6 +6,7 @@ namespace :load do
     set :certbot_www_domains,   -> { false }
     set :certbot_job_log,       -> { "#{shared_path}/log/lets_encrypt_cron.log" }
     set :certbot_job_type,      -> { 'systemd' }  # systemd / cron
+    set :certbot_webroot,       -> { "#{current_path}/public" }
     set :certbot_email,         -> { "" }
     # set :certbot_dh_path,       -> { fetch(:nginx_diffie_hellman_path, "/etc/ssl/certs/dhparam.pem")}
     # set :certbot_dh_size,       -> { 4096 }
@@ -61,7 +62,7 @@ namespace :certbot do
   
   desc "Install certbot LetsEncrypt"
   task :install do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       within fetch(:certbot_path) do
         execute :sudo, "apt update"
         execute :sudo, "apt install -y certbot"
@@ -72,19 +73,19 @@ namespace :certbot do
   
   desc "Generate LetsEncrypt certificate"
   task :generate do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       certbot_email = fetch_certbot_email
       expand_option = fetch_certbot_expand_option
       domain_args = fetch_certbot_domain_args
       
-      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{certbot_email} certonly --webroot -w #{current_path}/public #{domain_args} #{expand_option}"
+      execute :sudo, "certbot --non-interactive --agree-tos --allow-subset-of-names --email #{certbot_email} certonly --webroot -w #{fetch(:certbot_webroot, "#{current_path}/public")}  #{domain_args} #{expand_option}"
     end
   end
 
 
   desc "Delete LetsEncrypt certificate"
   task :delete do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       # 1️⃣ Email check with explanation
       puts "⚠️  This will delete the certificates for the domain: #{Array(fetch(:certbot_domains))[0]}"
       ask(:certbot_delete_cert, "Are you sure? (yes|no):")
@@ -102,7 +103,7 @@ namespace :certbot do
   
   desc "Upload and setup LetsEncrypt Auto-renew-job"
   task :setup_auto_renew do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       if fetch(:certbot_job_type, 'systemd') == 'cron'
         # just once a week
         execute :sudo, "echo '0 0 * * 0 root certbot renew --no-self-upgrade --allow-subset-of-names --post-hook \"systemctl restart nginx\"  >> #{ fetch(:certbot_job_log) } 2>&1' | cat > #{ fetch(:certbot_path) }/lets_encrypt_cronjob"
@@ -123,7 +124,7 @@ namespace :certbot do
   
   desc "Show logs for LetsEncrypt Auto-renew-job"
   task :auto_renew_logs do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       if fetch(:certbot_job_type, 'systemd') == 'cron'
         execute :sudo, "tail -n 50 #{fetch(:certbot_job_log)}"
       else
@@ -135,7 +136,7 @@ namespace :certbot do
   
   desc "Remove LetsEncrypt Auto-renew-job"
   task :remove_auto_renew do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       if fetch(:certbot_job_type, 'systemd') == 'cron'
         execute :sudo, "rm -f /etc/cron.d/lets_encrypt"
       else
@@ -150,7 +151,7 @@ namespace :certbot do
   
   desc "Dry-Run Renew LetsEncrypt"
   task :dry_renew do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       # execute :sudo, "#{ fetch(:certbot_path) }/certbot-auto renew --dry-run"
       output = capture(:sudo, "certbot renew --dry-run")
       puts "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
@@ -164,7 +165,7 @@ namespace :certbot do
 
   desc "Renew LetsEncrypt certificates"
   task :renew do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       # execute :sudo, "#{ fetch(:certbot_path) }/certbot-auto renew --dry-run"
       output = capture(:sudo, "certbot renew")
       puts "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
@@ -179,7 +180,7 @@ namespace :certbot do
   # => ECDH (X25519) is automatically used → No need to generate DH params.
   ## desc "Generate Strong Diffie-Hellman Group"
   ## task :generate_dhparam do
-  ##   on release_roles fetch(:certbot_roles) do
+  ##   on roles fetch(:certbot_roles) do
   ##     dh_path = fetch(:certbot_dh_path).to_s.split("/")
   ##     dh_path.pop
   ##     execute :sudo, "mkdir -p #{dh_path.join("/")}"
@@ -198,7 +199,7 @@ namespace :certbot do
 
   desc "Check if TLS 1.3 is correctly enabled on the server"
   task :check_tls do
-    on release_roles(:web) do
+    on roles fetch(:certbot_roles) do
       domain = fetch(:nginx_major_domain, fetch(:nginx_domains).first)
 
       puts "🔍 Checking TLS 1.3 for #{domain}..."
@@ -215,7 +216,7 @@ namespace :certbot do
 
   desc 'Get the DNS challenge txt-entry'
   task :dns_challenge_get do
-    on release_roles fetch(:certbot_roles) do
+    on roles fetch(:certbot_roles) do
       within release_path do
 
         certbot_email = fetch_certbot_email
@@ -233,7 +234,7 @@ namespace :certbot do
 
   desc 'Run Certbot to validate the DNS challenge'
   task :dns_challenge_validate do
-    on roles(:app) do
+    on roles fetch(:certbot_roles) do
       within release_path do
         certbot_email = fetch_certbot_email
         expand_option = fetch_certbot_expand_option
