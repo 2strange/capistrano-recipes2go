@@ -39,8 +39,8 @@ upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_cluster {
 server {
   # Listen on the internal port where the Proxy Nginx expects to find this server.
   # Use 0.0.0.0 to listen on all interfaces if it's in a container.
-  listen <%= fetch(:nginx_upstream_app_port) %>;
-  listen [::]:<%= fetch(:nginx_upstream_app_port) %>;
+  listen <%= fetch(:nginx_upstream_port) %>;
+  listen [::]:<%= fetch(:nginx_upstream_port) %>;
 
   # No public server_name needed, as it's only accessed internally by IP/Port.
   server_name localhost; # Or just '_', or the internal IP/hostname

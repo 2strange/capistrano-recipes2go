@@ -59,8 +59,8 @@ namespace :load do
 
     # Upstream App Server (where the App-Nginx runs)
     # WICHTIG: Diese in config/deploy/<stage>.rb setzen!
-    # z.B. set :nginx_upstream_app_host, '10.0.0.5'
-    #      set :nginx_upstream_app_port, 8080
+    # z.B. set :nginx_upstream_host, '10.0.0.5'
+    #      set :nginx_upstream_port, 8080
     ## new style: Use these variables to define the upstream app server, falling back to old style if not set
     set :nginx_upstream_host,     -> { fetch(:nginx_upstream_app_host, nil) }
     set :nginx_upstream_port,     -> { fetch(:nginx_upstream_app_port, 4500) } # Port App-Nginx is exposed on (e.g. Docker mapped port or direct)
@@ -113,10 +113,10 @@ namespace :nginx do
   namespace :proxy do
     # Helper task to ensure upstream variables are set for the proxy
     task :ensure_upstream_vars_set do
-      unless fetch(:nginx_upstream_app_host)
-        error "FEHLER: Bitte `:nginx_upstream_app_host` in deiner Stage-Konfiguration setzen (z.B. config/deploy/#{fetch(:stage)}.rb)."
-        info "Beispiel: set :nginx_upstream_app_host, 'interne.ip.des.app.servers'"
-        info "          set :nginx_upstream_app_port, 8080"
+      unless fetch(:nginx_upstream_host)
+        error "FEHLER: Bitte `:nginx_upstream_host` in deiner Stage-Konfiguration setzen (z.B. config/deploy/#{fetch(:stage)}.rb)."
+        info "Beispiel: set :nginx_upstream_host, 'interne.ip.des.app.servers'"
+        info "          set :nginx_upstream_port, 8080"
         exit 1
       end
     end

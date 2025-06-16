@@ -109,8 +109,8 @@ set :nginx_proxy_log_folder,  -> { "/var/log/nginx" } # Log-Ordner auf dem Proxy
 set :nginx_proxy_hooks,       -> { true } # Deploy-Hooks für Proxy Nginx aktivieren
 
 # WICHTIG: Die IP-Adresse und der Port des internen App-Nginx-Servers
-set :nginx_upstream_app_host, -> { '10.0.0.5' } # Ersetzen durch die interne IP des App-Servers
-set :nginx_upstream_app_port, -> { 4550 } # Port, auf dem der App-Nginx lauscht
+set :nginx_upstream_host, -> { '10.0.0.5' } # Ersetzen durch die interne IP des App-Servers
+set :nginx_upstream_port, -> { 4550 } # Port, auf dem der App-Nginx lauscht
 ```
 
 ### App-Server-Einstellungen
@@ -237,8 +237,8 @@ Du kannst Nginx-Dienste auch manuell steuern oder überprüfen:
 
 *   **Firewall:** Stelle sicher, dass die Firewalls korrekt konfiguriert sind:
     *   **Proxy-Server:** Port 80 (HTTP) und 443 (HTTPS) müssen öffentlich zugänglich sein.
-    *   **App-Server:** Nur der `nginx_upstream_app_port` (z.B. 4550) muss vom Proxy-Server aus erreichbar sein. Alle anderen Ports sollten für externe Zugriffe geschlossen sein.
-*   **Interne Netzwerke:** Nutze für `nginx_upstream_app_host` eine private/interne IP-Adresse des App-Servers, um den Netzwerkverkehr zu isolieren und zu optimieren.
+    *   **App-Server:** Nur der `nginx_upstream_port` (z.B. 4550) muss vom Proxy-Server aus erreichbar sein. Alle anderen Ports sollten für externe Zugriffe geschlossen sein.
+*   **Interne Netzwerke:** Nutze für `nginx_upstream_host` eine private/interne IP-Adresse des App-Servers, um den Netzwerkverkehr zu isolieren und zu optimieren.
 *   **`cert_domain` Variable:** Stelle sicher, dass die Variable `cert_domain` in deinem Capistrano-Setup definiert ist, da sie für die SSL-Zertifikatspfade verwendet wird. (oft `set :cert_domain, -> { fetch(:nginx_major_domain) || fetch(:nginx_domains).first }`)
 
 ## 8. Beispiel-Verbindungen

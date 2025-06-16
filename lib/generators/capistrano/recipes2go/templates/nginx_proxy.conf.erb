@@ -8,7 +8,7 @@
 # Upstream for the Internal App Nginx Server
 # This is where your App Nginx (e.g., in a Docker container or on a separate VM) listens.
 upstream app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server {
-  server <%= fetch(:nginx_upstream_app_host) %>:<%= fetch(:nginx_upstream_app_port) %>;
+  server <%= fetch(:nginx_upstream_host) %>:<%= fetch(:nginx_upstream_port) %>;
   # If you have multiple app servers, you'd list them here:
   # server 10.0.0.6:4550;
   # server 10.0.0.7:4550;
@@ -166,7 +166,7 @@ server {
     proxy_buffers 64 512k;
     client_body_buffer_size 512k;
     client_max_body_size 0;
-    # proxy_redirect    off;
+    proxy_redirect    off;
     proxy_pass        http://app_<%= fetch(:application) %>_<%= fetch(:stage) %>_app_server;
   }
 }
