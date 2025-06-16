@@ -69,6 +69,38 @@ require 'capistrano/recipes2go/ufw'         # Linux FireWall helpers
 
 
 
+
+
+#### Sample Config for minimal proxy setup
+
+```ruby
+
+set :user,                  "deploy"
+
+## Application-Server:
+server "180.11.22.11", user: fetch(:user), roles: %w{app web}
+## Proxy-Server: (no-release)
+server "180.11.22.22", user: fetch(:user), roles: %w{proxy},    no_release: true
+
+set :deploy_to,             "/home/#{ fetch(:user) }/#{ fetch(:application) }_#{fetch(:stage)}"
+set :branch,                'master'
+
+## App-Server upstream
+set :nginx_upstream_host,   "150.11.22.33"
+set :nginx_upstream_port,   "3000"
+
+## NginX
+set :nginx_domains,         ['example.com']
+
+## ssl-handling
+set :nginx_use_ssl,         true
+set :certbot_email,         "mail@example.com"
+set :certbot_roles,         [:proxy]
+set :certbot_webroot,       "/var/www/html"
+
+```
+
+
 ## Contributing
 Contribution directions go here.
 

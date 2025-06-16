@@ -61,8 +61,9 @@ namespace :load do
     # WICHTIG: Diese in config/deploy/<stage>.rb setzen!
     # z.B. set :nginx_upstream_app_host, '10.0.0.5'
     #      set :nginx_upstream_app_port, 8080
-    set :nginx_upstream_app_host, -> { nil }
-    set :nginx_upstream_app_port, -> { 4500 } # Port App-Nginx is exposed on (e.g. Docker mapped port or direct)
+    ## new style: Use these variables to define the upstream app server, falling back to old style if not set
+    set :nginx_upstream_host,     -> { fetch(:nginx_upstream_app_host, nil) }
+    set :nginx_upstream_port,     -> { fetch(:nginx_upstream_app_port, 4500) } # Port App-Nginx is exposed on (e.g. Docker mapped port or direct)
 
 
     # === APP NGINX SETTINGS ===
