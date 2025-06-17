@@ -34,6 +34,7 @@ require 'capistrano/recipes2go/server'      # Setup Debian12 / Ubuntu24 server t
 
 require 'capistrano/recipes2go/certbot'     # Lets-Encrypt helpers
 require 'capistrano/recipes2go/db'          # Database helpers (seed + yaml_db tasks)
+require 'capistrano/recipes2go/dragonfly'   # Dragonfly image exchange helpers
 require 'capistrano/recipes2go/keys'        # Rails KEY and CONFIG helpers
 require 'capistrano/recipes2go/monit'       # Monit helpers
 require 'capistrano/recipes2go/nginx'       # Nginx helpers
