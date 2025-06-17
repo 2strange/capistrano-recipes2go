@@ -16,7 +16,7 @@ end
 
 
 
-namespace :backup do
+namespace :dragonfly do
 
   desc "download attachment files from server"
   task :get_attachments do
