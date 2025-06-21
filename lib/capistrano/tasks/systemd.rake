@@ -22,7 +22,7 @@ namespace :systemd do
         execute :sudo, :mv, "/tmp/#{service_name}.#{type}", "/etc/systemd/system/#{service_name}.#{type}"
       end
 
-      execute :sudo, :systemctl, "daemon reload"
+      execute :sudo, :systemctl, "daemon-reload"
       execute :sudo, :systemctl, "enable --now #{service_name}.timer"
     end
   end
