@@ -22,8 +22,8 @@ namespace :systemd do
         execute :sudo, :mv, "/tmp/#{service_name}.#{type}", "/etc/systemd/system/#{service_name}.#{type}"
       end
 
-      execute :sudo, :systemctl, :daemon, :reload
-      execute :sudo, :systemctl, :enable, "--now", "#{service_name}.timer"
+      execute :sudo, :systemctl, "daemon reload"
+      execute :sudo, :systemctl, "enable --now #{service_name}.timer"
     end
   end
 
@@ -38,7 +38,7 @@ namespace :systemd do
   desc "Zeige Journal-Logs des Log-Cleanup-Services"
   task :log_cleanup_journal do
     on roles fetch(:systemd_roles) do
-      execute :sudo, :journalctl, "-u", "#{fetch(:log_cleanup_service_name)}.service", "--no-pager", "-n", "50"
+      execute :sudo, :journalctl, "-u #{fetch(:log_cleanup_service_name)}.service --no-pager -n 50"
     end
   end
 
