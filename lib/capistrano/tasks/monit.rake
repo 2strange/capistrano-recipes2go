@@ -12,6 +12,7 @@ namespace :load do
     # Basis-Einstellungen für Monit
     set :monit_roles,                 -> { :web }
     set :monit_interval,              -> { 60 }
+    set :monit_start_delay,           -> { 120 }  # Verzögerung in Sekunden, bevor Monit startet
     set :monit_bin,                   -> { '/usr/bin/monit' }
 
     set :monit_logfile,               -> { "#{shared_path}/log/monit.log" }  # Default in Monit: /var/log/monit.log
@@ -44,12 +45,14 @@ namespace :load do
     set :monit_mail_from,             -> { "monit@foo.bar" }
     set :monit_mail_reply_to,         -> { "support@foo.bar" }
 
-    set :monit_ignore,                -> { [] }  # z. B. %w[action pid]
+    set :monit_ignore,                -> { %w[action instance] }  # z. B. %w[action pid]
 
     ## System-Checks:
-    set :monit_max_load_avg,          -> { 2 }  # Maximale durchschnittliche Systemlast (CPUs des Systems berücksichtigen, z. B. 2 CPUs = 2, 4 CPUs = 4, etc.)
+    # now checked per core so this is kind of obsolete
+    set :monit_max_load_avg,          -> { nil }  # Maximale durchschnittliche Systemlast (CPUs des Systems berücksichtigen, z. B. 2 CPUs = 2, 4 CPUs = 4, etc.)
+    
     set :monit_max_memory_percent,    -> { 75 }
-    set :monit_max_cpu_percent,       -> { 75 }
+    set :monit_max_cpu_percent,       -> { 95 }
     set :monit_max_hdd_percent,       -> { 75 }
 
     # Zusätzliche Einstellungen für PostgreSQL
@@ -59,15 +62,15 @@ namespace :load do
     set :monit_redis_pid,             -> { fetch(:redis_pid, "/var/run/redis/redis-server.pid") }
 
     # Einstellungen für Puma (benötigt secrets_key_base)
-    set :monit_puma_totalmem_mb,      -> { 1024 }
+    set :monit_puma_totalmem_mb,      -> { 3072 }
     set :monit_puma_pid_path,         -> { fetch(:puma_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Thin (benötigt secrets_key_base)
-    set :monit_thin_totalmem_mb,      -> { 1024 }
+    set :monit_thin_totalmem_mb,      -> { 2048 }
     set :monit_thin_pid_path,         -> { fetch(:thin_pid_path, "#{shared_path}/pids") }
 
     # Einstellungen für Sidekiq (ehemals sidekiq_six, jetzt in "sidekiq" umbenannt)
-    set :monit_sidekiq_totalmem_mb,   -> { 1024 }
+    set :monit_sidekiq_totalmem_mb,   -> { 2048 }
     set :monit_sidekiq_timeout_sec,   -> { 90 }
     set :monit_sidekiq_pid_path,      -> { fetch(:sidekiq_pid_path, "#{shared_path}/pids") }  # Variable an Sidekiq angepasst
 
@@ -80,6 +83,7 @@ namespace :load do
     set :monit_webclient_ssl_cert,    -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient)}/fullchain.pem" }
     set :monit_webclient_ssl_key,     -> { "/etc/letsencrypt/live/#{fetch(:monit_webclient)}/privkey.pem" }
     set :monit_nginx_template,        -> { :default }
+    set :monit_nginx_roles,           -> { fetch(:nginx_roles, :web) }  # Nginx-Rollen für den Webclient
 
 
     # Website-Monitoring: Statt der alten :monit_website_check_*-Variablen wird nun :monit_websites_to_check genutzt
@@ -122,7 +126,7 @@ namespace :monit do
 
   desc "Install Monit"
   task :install do
-    on release_roles fetch(:monit_roles) do
+    on roles fetch(:monit_roles) do
       ensure_monit_installed
     end
   end
@@ -177,7 +181,7 @@ namespace :nginx do
     
     desc 'Creates MONIT WebClient configuration and upload it to the available folder'
     task :add do
-      on release_roles fetch(:nginx_roles) do
+      on roles fetch(:monit_nginx_roles) do
         config_file = fetch(:monit_nginx_template, :default)
         puts "📤 Uploading Monit - Nginx config"
         if config_file == :default
@@ -191,7 +195,7 @@ namespace :nginx do
     
     desc 'Enables MONIT WebClient creating a symbolic link into the enabled folder'
     task :enable do
-      on release_roles fetch(:nginx_roles) do
+      on roles fetch(:monit_nginx_roles) do
         enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf"
         available_path = "/etc/nginx/sites-available/monit_webclient.conf"
         unless test "[ -h #{enabled_path} ]"
@@ -205,7 +209,7 @@ namespace :nginx do
 
     desc 'Disables MONIT WebClient removing the symbolic link located in the enabled folder'
     task :disable do
-      on release_roles fetch(:nginx_roles) do
+      on roles fetch(:monit_nginx_roles) do
         enabled_path = "/etc/nginx/sites-enabled/monit_webclient.conf}"
         if test "[ -f #{ enabled_path } ]"
           execute :sudo, :rm, '-f', enabled_path
@@ -236,7 +240,7 @@ namespace :certbot do
 
   desc 'MONIT-WebClient: Run Certbot to validate the DNS challenge'
   task :monit_dns_challenge do
-    on roles(:app) do
+    on release_roles fetch(:certbot_roles) do
       within release_path do
         certbot_email = fetch(:certbot_email, "").strip
         if certbot_email.empty?

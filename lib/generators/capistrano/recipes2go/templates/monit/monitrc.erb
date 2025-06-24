@@ -1,4 +1,5 @@
-set daemon <%= fetch(:monit_interval) %>
+## MonitRC file created by: Capistrano Recipes2Go
+set daemon <%= fetch(:monit_interval) %> with start delay <%= fetch(:monit_start_delay, 60) %> seconds
 
 set logfile <%= fetch(:monit_logfile) %>
 set idfile <%= fetch(:monit_idfile) %>
@@ -54,9 +55,13 @@ set httpd port <%= fetch(:monit_http_port) %>
 <% end %>
 
 check system <%= fetch(:monit_name, "#{ fetch(:application) }_server") %>
-    if loadavg(5min) > <%= fetch(:monit_max_load_avg, 2) %> for 2 cycles then <%= monit_alert %>
+    if loadavg (1min) per core > 2 for 3 cycles then <%= monit_alert %>
+    if loadavg (5min) per core > 1.5 for 10 cycles then <%= monit_alert %>
+    <% if fetch(:monit_max_load_avg, nil) %>if loadavg(5min) > <%= fetch(:monit_max_load_avg, 2) %> for 2 cycles then <%= monit_alert %><% end %>
+    if cpu usage > <%= fetch(:monit_max_cpu_percent, 95) %>% for 10 cycles then <%= monit_alert %>
     if memory > <%= fetch(:monit_max_memory_percent, 75) %>% for 2 cycles then <%= monit_alert %>
-    if cpu(user) > <%= fetch(:monit_max_cpu_percent, 75) %>% for 2 cycles then <%= monit_alert %>
+    if swap usage > 50% then alert
+
 
 check device HardDrive with path /
     if SPACE usage > <%= fetch(:monit_max_hdd_percent, 75) %>% then <%= monit_alert %>
