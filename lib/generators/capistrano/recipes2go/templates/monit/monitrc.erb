@@ -1,5 +1,5 @@
 ## MonitRC file created by: Capistrano Recipes2Go
-set daemon <%= fetch(:monit_interval) %> with start delay <%= fetch(:monit_start_delay, 60) %> seconds
+set daemon <%= fetch(:monit_interval) %> with start delay <%= fetch(:monit_start_delay, 60) %>
 
 set logfile <%= fetch(:monit_logfile) %>
 set idfile <%= fetch(:monit_idfile) %>
