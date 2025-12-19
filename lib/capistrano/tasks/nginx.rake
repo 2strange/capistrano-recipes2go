@@ -30,6 +30,7 @@ namespace :load do
     # SSL Paths
     set :nginx_ssl_cert,          -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
     set :nginx_ssl_key,           -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
+    set :nginx_ssl_chain,         -> { "/etc/letsencrypt/live/#{ cert_domain }/chain.pem" }
 
     # SSL Paths for old domain certificates, if major domain is set
     set :nginx_other_ssl_cert,    -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
