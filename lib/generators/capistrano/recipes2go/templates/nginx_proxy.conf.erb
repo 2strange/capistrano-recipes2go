@@ -121,7 +121,6 @@ server {
 
   ssl_certificate     <%= fetch(:nginx_ssl_cert) %>;
   ssl_certificate_key <%= fetch(:nginx_ssl_key) %>;
-  ssl_trusted_certificate <%= fetch(:nginx_ssl_chain) %>;
 
   <%= render2go("nginx/https_ssl_options") %> # SSL options are only on the proxy
 <% else %>

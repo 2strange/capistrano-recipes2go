@@ -39,7 +39,7 @@ namespace :load do
 
     set :nginx_ssl_cert,          -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
     set :nginx_ssl_key,           -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }
-    set :nginx_ssl_chain,         -> { "/etc/letsencrypt/live/#{ cert_domain }/chain.pem" }
+    set :nginx_ocsp_stapling,     -> { false } # let's encrypt does not support stapling since 2025
     # For old domain certs if major_domain is set
     set :nginx_other_ssl_cert,    -> { "/etc/letsencrypt/live/#{ cert_domain }/fullchain.pem" }
     set :nginx_other_ssl_key,     -> { "/etc/letsencrypt/live/#{ cert_domain }/privkey.pem" }

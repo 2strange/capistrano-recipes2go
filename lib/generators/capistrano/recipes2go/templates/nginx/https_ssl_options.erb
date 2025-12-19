@@ -8,12 +8,14 @@
   ssl_session_cache   shared:SSL_50:50m;
   ssl_session_tickets off;
 
+  <% if fetch(:nginx_ocsp_stapling, false) %>
   ## OCSP Stapling for Faster SSL Handshakes
   ssl_stapling        on;
   ssl_stapling_verify on;
   # DNS für die OCSP-Abfrage
   resolver            8.8.8.8 1.1.1.1 valid=300s;
   resolver_timeout    5s;
+  <% end %>
 
   ## Security Headers
   add_header X-Frame-Options DENY;
