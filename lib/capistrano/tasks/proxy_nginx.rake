@@ -75,6 +75,7 @@ namespace :load do
     # App specific paths (relative to shared_path for linked_dirs)
     set :nginx_root_folder,       -> { "#{shared_path}/public" }    # JS app static files (Nuxt default: "dist")
     set :nginx_static_dir,        -> { "#{shared_path}/public" }
+    set :nginx_log_path,          -> { "#{shared_path}/log" }
     set :nginx_log_folder,        -> { "log" }    # App Nginx logs
 
     # This is from your original setup, relevant for the app server.
