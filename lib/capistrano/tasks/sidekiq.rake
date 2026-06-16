@@ -122,3 +122,9 @@ namespace :deploy do
     end
   end
 end
+
+### Add Sidekiq to the main setup task (upload service + enable), so the first
+### deploy doesn't need a manual `sidekiq:configure` step.
+task :setup do
+  invoke "sidekiq:configure" if fetch(:sidekiq_default_hooks, true)
+end

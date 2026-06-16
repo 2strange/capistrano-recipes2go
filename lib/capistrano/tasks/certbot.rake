@@ -1,3 +1,8 @@
+require 'capistrano/recipes2go/base_helpers'
+require 'capistrano/recipes2go/nginx_helpers'
+include Capistrano::Recipes2go::BaseHelpers
+include Capistrano::Recipes2go::NginxHelpers
+
 namespace :load do
   task :defaults do
     set :certbot_roles,         -> { :web }
@@ -250,7 +255,37 @@ namespace :certbot do
     end
   end
 
-  
+
+  desc "Bootstrap Let's Encrypt: minimal ACME-only nginx vhost, generate the cert, then remove it"
+  task :bootstrap do
+    site = "#{fetch(:application)}_#{fetch(:stage)}_letsencrypt"
+    on roles fetch(:certbot_roles) do
+      webroot = fetch(:certbot_webroot)
+      info "🔐 [certbot] Bootstrapping ACME-only vhost (webroot #{webroot})…"
+      execute :sudo, "mkdir -p #{webroot} /etc/nginx/sites-available /etc/nginx/sites-enabled"
+      template2go("nginx_letsencrypt.conf", "/tmp/#{site}")
+      execute :sudo, :mv, "/tmp/#{site}", "/etc/nginx/sites-available/#{site}"
+      execute :sudo, :ln, "-sf", "/etc/nginx/sites-available/#{site}", "/etc/nginx/sites-enabled/#{site}"
+      execute :sudo, "nginx -t"
+      execute :sudo, "systemctl reload-or-restart nginx"
+    end
+
+    # Issue the cert against the minimal vhost (uses :certbot_webroot + :certbot_roles).
+    invoke "certbot:generate"
+
+    on roles fetch(:certbot_roles) do
+      info "🧹 [certbot] Cert issued — removing minimal ACME vhost (renewals run via the deployed config's .well-known block)…"
+      execute :sudo, :rm, "-f", "/etc/nginx/sites-enabled/#{site}", "/etc/nginx/sites-available/#{site}"
+      execute :sudo, "systemctl reload nginx"
+    end
+  end
+
+end
+
+
+### Add Let's Encrypt cert bootstrap to the main setup task (only when SSL is used)
+task :setup do
+  invoke "certbot:bootstrap" if fetch(:nginx_use_ssl, false)
 end
 
 

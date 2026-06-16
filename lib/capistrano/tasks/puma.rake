@@ -185,7 +185,8 @@ namespace :deploy do
   end
 end
 
-### Add Puma setup to the main setup task
+### Add Puma to the main setup task — `configure` uploads the service + config AND
+### enables it (so the first deploy can start it without a manual configure step).
 task :setup do
-  invoke "puma:setup"
+  invoke "puma:configure"
 end
