@@ -49,7 +49,7 @@ namespace :db do
       ask(:are_you_sure, 'no')
       if fetch(:are_you_sure, 'no').to_s.downcase == 'yes'
         within current_path do
-          execute :bundle, :exec, :rake, "db:seed RAILS_ENV=#{fetch(:stage)}"
+          execute :bundle, :exec, :rake, "db:seed RAILS_ENV=#{fetch(:rails_env, fetch(:stage))}"
         end
       else
         puts(".. stoped process ..")
@@ -66,7 +66,7 @@ namespace :db do
   ##   # download yaml version of current DB
   ##   on roles :db do
   ##     within current_path do
-  ##       execute :bundle, :exec, :rake, "db:data:dump RAILS_ENV=#{fetch(:stage)}"
+  ##       execute :bundle, :exec, :rake, "db:data:dump RAILS_ENV=#{fetch(:rails_env, fetch(:stage))}"
   ##       # => download! "#{current_path}/db/data.yml", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{ Time.now.strftime("%y-%m-%d_%H-%M") }_#{fetch(:stage)}_db_data.yml"
   ##       execute "cd #{current_path}/db ; tar -czvf data-dumb.tar.gz data.yml"
   ##       download! "#{current_path}/db/data-dumb.tar.gz", "#{fetch(:db_local_backup_dir, 'db/backups')}/#{ Time.now.strftime("%y-%m-%d_%H-%M") }_#{fetch(:stage)}_db.tar.gz"
@@ -94,7 +94,7 @@ namespace :db do
 
       within current_path do
         # Dump erstellen
-        execute :bundle, :exec, :rake, "db:data:dump RAILS_ENV=#{fetch(:stage)}"
+        execute :bundle, :exec, :rake, "db:data:dump RAILS_ENV=#{fetch(:rails_env, fetch(:stage))}"
       end
 
       # YAML verschieben ins Backup-Verzeichnis
@@ -298,7 +298,7 @@ namespace :db do
         run_locally { execute "rsync -av --delete #{local_dir} #{remote_dir}" }
         puts(".. loading data.yml in #{ fetch(:stage) } DB")
         within release_path do
-          execute :bundle, :exec, :rake, "db:data:load RAILS_ENV=#{fetch(:stage)}"
+          execute :bundle, :exec, :rake, "db:data:load RAILS_ENV=#{fetch(:rails_env, fetch(:stage))}"
         end
       else
         puts(".. stoped process ..")

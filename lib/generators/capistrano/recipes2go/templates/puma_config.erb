@@ -1,7 +1,10 @@
 # Puma configuration file
 
 directory '<%= current_path %>'
-environment '<%= fetch(:stage) %>'
+# G1 (instance-env): rack-env entkoppelt vom Stage-Namen — Multi-Instanz-Stages
+# (z.B. 'spital') laufen mit rails_env=production; Fallback-Kette haelt bestehende
+# Stages byte-identisch (prod/staging: rails_env == stage).
+environment '<%= fetch(:puma_env, fetch(:rails_env, fetch(:stage))) %>'
 
 # Fix the socket name
 <% if fetch(:puma_workers).to_i > 1 %>

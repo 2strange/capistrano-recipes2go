@@ -21,6 +21,9 @@ namespace :load do
 
     set :sidekiq_ruby_vm,         -> { :rvm }   # ( :rvm | :rbenv | :system )
     set :sidekiq_user,            -> { fetch(:user, 'deploy') }
+    # G1/G2 (instance-env): sidekiq-env + generische Unit-Env-Vars.
+    set :sidekiq_env,             -> { fetch(:rails_env, fetch(:stage)) }
+    set :sidekiq_env_vars,        -> { {} }   # z.B. { 'SLOTS_INSTANCE' => 'spital' }
     set :sidekiq_log_lines,       -> { 100 }
 
     append :linked_dirs, "pids", "log"

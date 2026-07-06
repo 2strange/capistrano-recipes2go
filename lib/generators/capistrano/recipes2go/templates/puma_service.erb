@@ -6,6 +6,9 @@ After=network.target
 Type=simple
 User=<%= fetch(:puma_user) %>
 Group=<%= fetch(:puma_user) %>
+<% fetch(:puma_env_vars, {}).each do |env_key, env_value| %>
+Environment="<%= env_key %>=<%= env_value %>"
+<% end %>
 
 WorkingDirectory=<%= current_path %>
 ExecStart=<%= puma_command %> -C <%= shared_path %>/config/puma.rb

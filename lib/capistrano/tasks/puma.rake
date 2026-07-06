@@ -29,7 +29,10 @@ namespace :load do
     set :puma_max_threads,        -> { fetch(:puma_threads).last }
     set :puma_hooks,              -> { true }
     set :puma_ruby_vm,            -> { :rvm }   # ( :rvm | :rbenv | :system )
-    set :puma_user,               -> { fetch(:user, 'deploy') }  # Standardmäßiger Benutzer
+    set :puma_user,               -> { fetch(:user, 'deploy') }
+    # G1/G2 (instance-env): rack-env der Services + generische Unit-Env-Vars.
+    set :puma_env,                -> { fetch(:rails_env, fetch(:stage)) }
+    set :puma_env_vars,           -> { {} }   # z.B. { 'SLOTS_INSTANCE' => 'spital' }  # Standardmäßiger Benutzer
     set :puma_log_lines,          -> { 100 }
 
     set :puma_semantic_logger,    -> { true }

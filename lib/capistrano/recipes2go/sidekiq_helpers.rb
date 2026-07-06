@@ -50,7 +50,7 @@ module Capistrano
 
       def upload_service(service_file, idx = 0)
         args = []
-        args.push "--environment #{fetch(:stage)}"
+        args.push "--environment #{fetch(:sidekiq_env, fetch(:rails_env, fetch(:stage)))}"
         args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
         args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
 

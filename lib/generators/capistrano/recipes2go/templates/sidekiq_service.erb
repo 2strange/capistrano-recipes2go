@@ -28,6 +28,9 @@ Group=<%= fetch(:sidekiq_user) %>
 UMask=0002
 
 Environment=MALLOC_ARENA_MAX=2
+<% fetch(:sidekiq_env_vars, {}).each do |env_key, env_value| %>
+Environment="<%= env_key %>=<%= env_value %>"
+<% end %>
 
 RestartSec=1
 Restart=on-failure
