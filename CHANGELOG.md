@@ -1,5 +1,14 @@
 # Changelog — capistrano-recipes2go
 
+## 0.8.1 — 2026-10-15
+
+**Fix: `certbot_www_domains` erzeugte kaputte certbot-Argumente.**
+
+- **fix (certbot):** In `fetch_certbot_domain_args` fehlte das Leerzeichen vor dem
+  zweiten `-d` → aus `example.com` wurde `-d example.com-d www.example.com`.
+  Betrifft nur Stages mit `set :certbot_www_domains, true`; alle anderen
+  rendern unverändert. (Fund: interview-Bob, 2026-10-15)
+
 ## 0.8.0 — 2026-07-06
 
 **Multi-Instanz-Stages: Service-Env vom Stage-Namen entkoppelt + generische Unit-Env-Vars.**
