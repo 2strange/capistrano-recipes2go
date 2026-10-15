@@ -1,5 +1,15 @@
 # Changelog — capistrano-recipes2go
 
+## 0.8.2 — 2026-10-15
+
+**Deploys reißen den geteilten Proxy nicht mehr kurz runter.** Keine neue Config nötig.
+
+- **fix (nginx, Shared-Proxy):** `nginx:proxy:update` und `nginx:app:update` (laufen bei jedem
+  Deploy) haben nginx **neu gestartet** → auf einem geteilten Proxy kurz alle anderen Seiten weg.
+  Jetzt `nginx -t` (kaputte Config bricht den Deploy ab, laufendes nginx behält die alte) und dann
+  `systemctl reload-or-restart nginx` (reload; Start nur, falls nginx gar nicht läuft).
+  Manueller Restart bleibt: `cap <stage> nginx:proxy:service:restart`. (Fund: Mary-Bob)
+
 ## 0.8.1 — 2026-10-15
 
 **Fix: `certbot_www_domains` erzeugte kaputte certbot-Argumente.**
